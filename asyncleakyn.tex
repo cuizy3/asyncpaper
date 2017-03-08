@@ -54,6 +54,10 @@ The solution to this ODE is the exponential:
 Where $z_0$ is the inital concentration of the protein.  To find the time elapsed between $z_0$ and some $z_f$ just substitute $z(t)=z_f$.  We also note that at steady state $c=z_{ss}\cdot\lambda$.  Rearranging the equation for time:
 \[\Delta t= -log(z_f-z_{ss})/ \lambda+ log(z_0-z_{ss})/ \lambda
 \]
+or
+\[\Delta t= -log(z_{ss}-z_f)/ \lambda+ log(z_{ss}-z_0)/ \lambda
+\]
+because the expression inside the log must be positive.  (Note that this means $z_f$ and $z_0$ must be on the 'same side' as $z_{ss}$, this makes conceptual sense because this is an exponential decay or rise towards the final steady state value, it cannot cross the steady state value.)
  This is the amount of time it takes where $z_0$ is the initial protein concentration and $z_f$ is the final protein concentration.
 \newline
 %something about robustness?
@@ -67,23 +71,39 @@ The Muller C-element is useful in the design of asynchronous circuits.  If every
 \end{center}
 Set reset latches have a similar modes of operation with output high output low and hold but also differs in an important detail.  In a set reset latch, there are two inputs, called a set and a reset.  We look at the set reset NOR latch.  When set is high and reset is low then the output signal is 'set' or becomes high.  When set is low and reset is high then the output signal is 'reset' or becomes low.  If both inputs are low then the output does not change and is in the hold state.  The last state when both inputs are high gives an undefined output represented by 'X', usually this element does not go into this state.  The similarities between set reset latches and C-elements are quite apparent.  It is basically equivalent if you treat the reset signal of the set reset latch as an inverted second signal for the C-element.  However, when A is high and B is low, there is a hold state for the C-element whereas that corresponds to a high set and high reset and thus an undefined output for the set reset latch.
 \newline  \newline
-In our model we wish to verify the set reset property of each gene gate.  We use the above equation to check if the time for maximum set or reset transitions is smaller than the time during the hold state.  
-Let the input thresholds be:  0 is between $in_{min0}$ and $in_{max0}$ and 1 is between $in_{min1}$ and $in_{max1}$, (the fanout thresholds $fanout_0$ and $fanout_1$ must be between $g(in_{max0})$ and $g(in_{min1})$ )
-The maximum time it takes to set or reset in terms of output values is then: \newline
-Set- $out_{min0}$ - $fanout_1$ where the input is changed to inmin1 \newline
-Reset- $out_{max1}$ - $fanout_0$ where the input is changed to inmax0 \newline
-For holds we want the minimum time it stays in output 0 or 1 as the inputs are changed \newline
-$out_{max0}$ - $fanout_0$ with max \newline
-$out_{min1}$ - $fanout_1$ \newline
+In our model we wish to verify the set reset and hold property of each gene gate.  We use the exponential solution to the ODE equation.  Given the appropriate inputs we would like for all of the set and and reset transitions to take a shorter length of time than the temporary hold states.  More formally, we would like the worst case/longest set and reset transition times to be shorter than the worst case/shortest hold times.  First we define some of the parameters and variables that we use.  Define the input thresholds as:  $in_{min0}$ is the smallest acceptable input to represent an input '0' and $in_{max0}$ is the largest acceptable input to represent an input '1'.  Similarly, $in_{min1}$ is the smallest acceptable input to represent an input '1' and $in_{max1}$ is the largest acceptable input to represent an input '1'.  $fanout_0$ and $fanout_1$ represent the '0' and '1' input thresholds to the next components respectively.  There is an additional constraint where fanout thresholds $fanout_0$ and $fanout_1$ must be between $g(in_{max0})$ and $g(in_{min1})$ so that all legal input values provide legal outputs that feed into the next layer of components to be processed.
+\newline \newline
+To find the maximum and minimum times for set reset and hold, we analyze the equation for time.  To find the maximum set time, since set is when the output rises from '0' to '1' we can assume that $z_{ss}>z_f, z_0$ and use the second form of the time equation. $\Delta t$ is monotonically increasing in $z_f$ and monotonically decreasing in $z_0$.  Since $z_{ss}$ is involved in two terms we need further analysis to see its effects on time.  Taking the derivative with respect to $z_{ss}$:
+\[\frac{d\Delta t}{dz_{ss}}=- \frac{1}{(z_{ss}-z_f)}\frac{1}{\lambda}+ \frac{1}{(z_{ss}-z_0)}\frac{1}{\lambda}
+\]
+To find the maximum set time, we want to use the maximum $z_f$ where $z_f$ crosses the threshold to become a '1' signal and the minimum $z_0$ where $z_0$ is a '0' signal.  So we have $z_f=fanout_1$ and $z_0=g(in_{min0})$ using the monotonicity of the function g().  $z_{ss}$ is the steady state achieved by some constant input.  This input must be a valid '1' input so that set occurs and the steady state is also a valid '1' output.  Thus $z_{ss}$ must be bounded by: $g(in_{min1})\leq z_{ss}\leq g(in_{max1})$, and from earlier constraints we know that $fanout_1<z_{ss}$ and $fanout_1>g(in_{min0})$ so that:
+\[z_{ss}-fanout1< z_{ss}-g(in_{min0})
+\]
+\[\frac{1}{z_{ss}-fanout1}>\frac{1}{z_{ss}-g(in_{min0})}
+\]
+The derivative $\frac{d\Delta t}{dz_{ss}}$ is always negative in this case, so the smallest possible value in $z_{ss}$'s domain maximizes the set time, which is $z_{ss}=g(in_{min1})$.
+%Can insert a picture here too
+The maximum time for a set to occur can be rewritten as:
 \[\Delta t_{set}= - \frac{1}{\lambda} log(g(in_{min1})-fanout_1)/(g(in_{min1}) -g(in_{min0}))
 \]
+Next we find the maximum reset time.  (output goes from '1' to '0' while an input '0' is applied)  Since it is an exponential decay, we use the first formula for time.  $\Delta t$ is monotonically decreasing in $z_f$ and monotonically increasing in $z_0$.  Again take the derivative of the time equation with respect to $z_{ss}$:
+\[\frac{d\Delta t}{dz_{ss}}= \frac{1}{(z_f-z_{ss})}\frac{1}{\lambda}- \frac{1}{(z_0-z_{ss})}\frac{1}{\lambda}
+\]
+To find the maximum reset time, we want to use the minimum $z_f$ where $z_f$ crosses the threshold to become a '0' signal and the maximum $z_0$ where $z_0$ is a '1' signal.  So we have $z_f=fanout_0$ and $z_0=g(in_{max1})$ using the monotonicity of the function g().  $z_{ss}$ is an output '0' valued steady state achieved by a constant input that is also a valid '0' on the input side.  Thus $z_{ss}$ must be bounded by: $g(in_{min0})\leq z_{ss}\leq g(in_{max0})$, and from earlier constraints we know that $z_{ss}<fanout_0$ and $fanout_0<g(in_{max1})$ so that:
+\[fanout0-z_{ss}< g(in_{max1})-z_{ss}
+\]
+\[\frac{1}{fanout0-z_{ss}}>\frac{1}{g(in_{max1})-z_{ss}}
+\]
+The derivative $\frac{d\Delta t}{dz_{ss}}$ is always positive in this case, so the largest possible value in $z_{ss}$'s domain maximizes the set time, which is $z_{ss}=g(in_{max0})$.
+The maximum time for a set to occur can be rewritten as:
 \[\Delta t_{reset}= -\frac{1}{\lambda} log(fanout_0 –g(in_{max0}))/(g(in_{max1}) – g(in_{max0}))
 \]
-\[\Delta t_{hold0}= -\frac{1}{\lambda} log(z_{ss} -fanout_0)/(z_{ss} -g(in_{max0}))				
+For holds we want a minimum bound on the time the output remains within the '0' or '1' regions as the inputs are changed.  We first look at how long a signal stays in the '0' region, or hold 0 case.  We assume that the output eventually rises from the initial '0' value so that $z_{ss}>z_0$.  Note that if $z_{ss}<fanout_0$ then the output signal will be held at '0' indefinitely.  So we look at the case where $z_{ss}>fanout_0$.  Similar to finding the set time, we use the second form of the time equation.  This time we would like to find the minimum value for the time.  Since $\Delta t$ is monotonically increasing in $z_f$ and monotonically decreasing in $z_0$, we want to use the minimum $z_f$ such that the output stops being a valid '0' signal, that is $fanout_0$, and use the maximum $z_0$ that is a valid input '0', that is $g(in_{max0})$.  Additionally since the derivative of this equation with respect to $z_{ss}$ is always negative, we apply the largest possible 'hold' input where both active production and degradation are still considered '0'.  That is the baseline degradation and $in_{max0}$.  Because the degradation is different, the value $z_{ss}$ differs from $g(in_{max0})$, the input output pair has a different transfer function, call it $g'()$ so that the steady state output is $g'(in_{max0})$
+\[\Delta t_{hold0}= -\frac{1}{\lambda} log(g'(in_{max0}) -fanout_0)/(g'(in_{max0}) -g(in_{max0}))				
 \]
-\[\Delta t_{hold1}= -\frac{1}{\lambda} log(fanout_1 -z_{ss})/(g(in_{min1}) -z_{ss})
+The analysis is similar for the minimum time a signal stays in the '1' region, or hold 1 case.  For this case the output eventually decays from the initial '1' value so $z_{ss}<z_0$. Again, if $z_{ss}>fanout_1$ then the output signal will be held at '1' indefinitely. So we look at the case where $z_{ss}<fanout_1$.  Similar to finding the reset time, we use the first form of the time equation.   We would like to find the minimum value for the time.  Since $\Delta t$ is monotonically decreasing in $z_f$ and monotonically increasing in $z_0$, we want to use the maximum $z_f$ such that the output stops being a valid '1' signal, that is $fanout_1$, and use the minimum $z_0$ that is a valid input '1', that is $g(in_{min1})$.  Additionally since the derivative of this equation with respect to $z_{ss}$ is always positive, we apply the smallest possible 'hold' input where both active production and degradation are still considered '0'.  That is the baseline degradation and $in_{min0}$.  Again due to the difference in degradation rate, we use a different input output transfer function $g'()$ so that the steady state output is $g'(in_{min0})$  
+\[\Delta t_{hold1}= -\frac{1}{\lambda} log(fanout_1 -g'(in_{min0}))/(g(in_{min1}) -g'(in_{min0}))
 \]
-%can expand these equations... how we got to it
 Using standard parameter values, it is possible to have the hold times to be longer than the set reset times and so for short periods of time, this element can be considered as a set-reset memory element.  Thus we can abstract these biological motifs as a series of static and dynamic memories connected to each other.
 
 \section{Asynchronous circuits}
