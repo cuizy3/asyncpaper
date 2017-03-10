@@ -6,6 +6,7 @@
 \date{\today}  
 \usepackage{graphicx}
 \graphicspath{ {c:/Users/cuizy/Downloads/} }
+\usepackage{amsmath}
 \begin{document}
 
 \maketitle
@@ -42,7 +43,7 @@ Changing rates of degradation of proteins is an important aspect of the circuit 
 \begin{center}
 \includegraphics{mosinv}
 \end{center}
-\section{Static and Dynamic Memory}
+\section{Dynamic Memory}
 There are certain network motifs in biology that allows cells to have some sort of memory.  Our main examples are from Caulobacter but these motifs are present in other cells and thus this analysis is widely applicable.  
 %There are positive feedback loops such as in CtrA where once enough production of CtrA starts the feedback, it will remain locked in that high state.  Until degradation overpowers the feedback and pulls CtrA back down to a low state.  This bistable property is also how latches in digital circuits store memory. 
 We take inspiration from dynamic memory and look into the short term behavior of each gate.  As mentioned in the previous section, when the degradation term is slow, the changes in protein concentration over time is slow as well.  For very stable proteins, the half life of the protein is then only from splitting of the cells during each cell cycle.  We examine whether using experimentally determined parameters, it is possible to view these gates as memory elements.  For our analysis, we assume that the inputs are held constant.  Then there is a closed form exponential solution of our ODE model.  We can then determine the time elapsed from a given starting state to a final state.  (z is the output protein concentration, and c is the total contribution by the inputs, a constant if the inputs are held constant, $\lambda$ is the degradation rate)
@@ -65,10 +66,25 @@ because the expression inside the log must be positive.  (Note that this means $
 \includegraphics{celement}
 \end{center}
 The Muller C-element is useful in the design of asynchronous circuits.  If every signal in a circuit is connected with C-elements then it ensures that the circuit can run robustly and has the speed independence property.  Thus we would ideally want the elements we see in biological circuits to operate similarly to the C-element.  A common CMOS implementation of a C-element is shown with two inputs A and B, and an output C.  It operates similarly as the inverter example.  In this C-element example, when A and B are both high, the pull down network is activated, while there are open switches in the pull up network and the output is connected to the ground.  When both A and B are low, the opposite is true and the output is pulled to $V_{cc}$.  However when A and B are different signals ie A is high and B is low or when A is low and B is high, then there is no path through either the pull up or the pull down network and the previous value of the output is retained.  This state is called a 'hold'.
-\newline 
+\newline
 \begin{center}
-\includegraphics{srlatch}
+
+\begin{tabular}{|p{1.5cm}|p{1.5cm}|p{1.5cm}|p{2cm}| } 
+ \hline
+\textbf{S} & \textbf{R} & \textbf{Qnext} & \textbf{Action} \\
+\hline
+1 & 0 & 1 & set \\
+\hline
+0 & 1 & 0 & reset \\ 
+\hline
+0 & 0 & Q & hold state \\ 
+\hline
+1 & 1 & X & not allowed\\ 
+\hline
+\end{tabular}
+
 \end{center}
+
 Set reset latches have a similar modes of operation with output high output low and hold but also differs in an important detail.  In a set reset latch, there are two inputs, called a set and a reset.  We look at the set reset NOR latch.  When set is high and reset is low then the output signal is 'set' or becomes high.  When set is low and reset is high then the output signal is 'reset' or becomes low.  If both inputs are low then the output does not change and is in the hold state.  The last state when both inputs are high gives an undefined output represented by 'X', usually this element does not go into this state.  The similarities between set reset latches and C-elements are quite apparent.  It is basically equivalent if you treat the reset signal of the set reset latch as an inverted second signal for the C-element.  However, when A is high and B is low, there is a hold state for the C-element whereas that corresponds to a high set and high reset and thus an undefined output for the set reset latch.
 \newline  \newline
 In our model we wish to verify the set reset and hold property of each gene gate.  We use the exponential solution to the ODE equation.  Given the appropriate inputs we would like for all of the set and and reset transitions to take a shorter length of time than the temporary hold states.  More formally, we would like the worst case/longest set and reset transition times to be shorter than the worst case/shortest hold times.  First we define some of the parameters and variables that we use.  Define the input thresholds as:  $in_{min0}$ is the smallest acceptable input to represent an input '0' and $in_{max0}$ is the largest acceptable input to represent an input '1'.  Similarly, $in_{min1}$ is the smallest acceptable input to represent an input '1' and $in_{max1}$ is the largest acceptable input to represent an input '1'.  $fanout_0$ and $fanout_1$ represent the '0' and '1' input thresholds to the next components respectively.  There is an additional constraint where fanout thresholds $fanout_0$ and $fanout_1$ must be between $g(in_{max0})$ and $g(in_{min1})$ so that all legal input values provide legal outputs that feed into the next layer of components to be processed.
@@ -82,7 +98,7 @@ To find the maximum set time, we want to use the maximum $z_f$ where $z_f$ cross
 \[\frac{1}{z_{ss}-fanout1}>\frac{1}{z_{ss}-g(in_{min0})}
 \]
 The derivative $\frac{d\Delta t}{dz_{ss}}$ is always negative in this case, so the smallest possible value in $z_{ss}$'s domain maximizes the set time, which is $z_{ss}=g(in_{min1})$.
-%Can insert a picture here too
+%insert some graph here
 The maximum time for a set to occur can be rewritten as:
 \[\Delta t_{set}= - \frac{1}{\lambda} log(g(in_{min1})-fanout_1)/(g(in_{min1}) -g(in_{min0}))
 \]
@@ -104,7 +120,62 @@ For holds we want a minimum bound on the time the output remains within the '0' 
 The analysis is similar for the minimum time a signal stays in the '1' region, or the hold 1 case.  For this case the output eventually decays from the initial '1' value so $z_{ss}<z_0$. Again, if $z_{ss}>fanout_1$ then the output signal will be held at '1' indefinitely. So we look at the case where $z_{ss}<fanout_1$.  Similar to finding the reset time, we use the first form of the time equation.   We would like to find the minimum value for the time.  Since $\Delta t$ is monotonically decreasing in $z_f$ and monotonically increasing in $z_0$, we want to use the maximum $z_f$ such that the output stops being a valid '1' signal, that is $fanout_1$, and use the minimum $z_0$ that is a valid input '1', that is $g(in_{min1})$.  Additionally since the derivative of this equation with respect to $z_{ss}$ is always positive, we apply the smallest possible 'hold' input where both active production and degradation are still considered '0'.  That is the baseline degradation and $in_{min0}$.  Again due to the difference in degradation rate, we use a different input output transfer function $g'()$ so that the steady state output is $g'(in_{min0})$  
 \[\Delta t_{hold1}= -\frac{1}{\lambda} log(fanout_1 -g'(in_{min0}))/(g(in_{min1}) -g'(in_{min0}))
 \]
-Using standard parameter values, it is possible to have the hold times to be longer than the set reset times and so for short periods of time, this element can be considered as a set-reset memory element.  Thus we can abstract these biological motifs as a series of static and dynamic memories connected to each other.
+We check the function of the gcrA gene module against these equations.  We use parameter values that were previously determined for the ODE model from both experimental data and reasonable approximations based on these experiments.  
+\begin{center}
+
+\begin{tabular}{|p{1.8cm}|p{1cm}|p{1cm}|p{7cm}| } 
+ \hline
+\textbf{Parameter} & \textbf{Value} & \textbf{Units} & \textbf{Parameter explanation} \\
+\hline
+$\lambda_{sw}$ & 10.5 & min & GcrA half-life in swarmer \\ 
+\hline
+$\lambda_{st}$ & 42 & min & GcrA half-life in stalked \\ 
+\hline
+$issw$ & 0 or 1 & & boolean value where 1 indicates cell is in the swarmer state \\
+\hline
+$p_{gcrA}$ & 2.2 & nM/s & Maximum synthesis rate of GcrA from the promoter \\ 
+\hline
+$c_{HalfCtrA}$ & 1760 & nM & Concentration of CtrA~P that yields half of the maximum expression of CtrA-regulated genes\\
+\hline
+$c_{HalfDef}$ & 660 & nM & Default concentration of transciption factors ie. gcrA that yields half of the maximum expression of target genes\\
+\hline
+\end{tabular}
+
+\end{center}
+The equation for the ODE of just the gcrA gene module is:
+\[
+\begin{split}
+\frac{d gcrA}{d t}=\frac{2.2}{(1+(\frac{660}{dnaA})^2)\cdot (1+(\frac{ctrAP}{1760})^2)}-gcrA\cdot (\frac{log(2)}{60\cdot 42} \\
++(issw)\cdot \frac{log(2)}{60\cdot 10.5})
+\end{split}
+\]
+And the equation for the steady state is:
+\[gcrA_{ss}=\frac{2.2}{(1+(\frac{660}{dnaA})^2)\cdot (1+(\frac{ctrAP}{1760})^2)\cdot (\frac{log(2)}{60\cdot 42}
++(issw)\cdot \frac{log(2)}{60\cdot 10.5})}
+\]
+The various input and output thresholds that we use are:
+\[in_{min0}: dnaA=0, ctrAP=1760  \Rightarrow g(in_{min0})=0, g'(in_{min0})=0
+\]
+\[in_{max0}: dnaA=150, ctrAP=0  \Rightarrow g(in_{max0})=267, g'(in_{max0})=393
+\]
+\[in_{min1}: dnaA=660, ctrAP=1760  \Rightarrow g(in_{min1})=2666 %wouldn't this be a pareto frontier thing?
+\]
+\[in_{max1}: dnaA=1000, ctrAP=0  \Rightarrow g(in_{max1})=3800
+\]
+\[fanout_0=600
+\]
+\[fanout_1=1100
+\]
+With these set of parameters and thresholds the set rest and hold times are:
+\[\Delta t_{set}=1934.23749
+\]
+\[\Delta t_{reset}=1716.50821
+\]
+\[\Delta t_{hold0}= inf
+\]
+\[\Delta t_{hold1}=3218.61297
+\]
+The minimum hold times here are longer than the maximum set reset times and so for short periods of time, this element can be considered as a set-reset memory element.  Since these are the worst possible bounds, in practice set reset times would be shorter and the hold times would be even longer.  Thus we can abstract these biological motifs as a series of dynamic memories connected to each other.
 
 \section{Asynchronous circuits}
 One important aspect of asynchronous circuit design is having memory elements.  This is because for a asynchronous circuit to be able to function, it must receive feedback signals from the next stage so that it knows if it needs to hold its current value, or if the next stage has received it's signal and can go to the next stage in processing.
