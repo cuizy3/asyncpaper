@@ -1,5 +1,7 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
 
 \title{Use of asynchronous circuits and leakiness in modeling biological circuit of the Caulobacter Crescentus cell cycle}
 \author{Zoey Zhou}
@@ -29,20 +31,20 @@ Present day circuits generally use metal–oxide–semiconductor field-effect tr
 \begin{center}
 \includegraphics{mosfet}
 \end{center}
-\newline \newline
+\newline
 In CMOS there is the concept of a pull up network and a pull down network.  Based on the logic of the pull up and pull down networks, they can either function as an open in the circuit, or as some connective component.  So that when the pull up network is connected, and when the pull down network is effectively an open, the output signal gets pulled high.  While if the pull down network is connected and the pull up network is an open, the output signal gets pulled low.  In the inverter example, the pull up network consists of a PMOS that is connected to a voltage supply of $V_{dd}$ on one end and the pull down network consists of a NMOS which is connected to ground on one end.  PMOS behaves, on first order approximation, as a resistor when the input voltage is low and as an open switch when the input voltage is high.  NMOS is the opposite, it behaves as an open switch when the input voltage is low and as a resistor when the input voltage is high.  Thus when the input voltage is low, the output voltage is pulled up by the PMOS to $V_{dd}$.  Meanwhile when the input voltage is high, the output voltage is pulled down to ground by the NMOS.  The voltage transfer characteristic (VTC) of the inverter is a sigmoid.  This can be worked out using the equations of the MOSFET in different regions of operation.  It is in fact also a sigmoid in the other boolean logic gates that we use such as AND and OR gates.
 %(write about dynamic memory later?)
-\newline \newline
+\newline
 \includegraphics[width=\textwidth]{mosinaction2}
 \begin{center}
 \includegraphics{vtc}
 \end{center}
-\newline \newline
+\newline
 
 Memory elements are important in asynchronous circuits because they can hold the signal for some time until they receive input, usually from elements further down the circuit to signal that the current output has been acknowledged and processed already and does not need to hold anymore.  This can be implemented in a number of ways but one method is adding a capacitor to the output.  The equation of a capacitor is 
 \[I(t)=C\frac{dV(t)}{dt}
 \]
-It can be thought of as being charged up by the voltage as a high voltage is applied from $V_{out}$, or discharges when $V_{out}$ is low.  When in an RC circuit, the capacitor charges and discharges exponentially.  This is a valid way of maintaining the output voltage at either high or low for short amounts of time. 
+It can be thought of as being charged up by the voltage as a high voltage is applied from $V_{out}$, or discharges when $V_{out}$ is low.  When in an RC circuit, the capacitor charges and discharges exponentially.  This is a valid way of maintaining the output voltage at either high or low for short amounts of time.  We work these t in detail in a later section. 
 \begin{center}
 \includegraphics{mosinv}
 \end{center}
@@ -55,13 +57,14 @@ We must also verify some properties when these circuit components are connected 
 The next step is when gates are connected to each other, signals must propagate meaningfully as well.  The output of a gate should read as the same binary value into the input of the following gate based on their respective thresholds.  That is for the $i^{th}$ component which is connected to the $i+1^{th}$ component, $output_i low \leq input_{i+1} low$ and $output_i high \geq input_{i+1} high$.  Multiple inputs are common in biology where there can be activators and repressors and even degradation enzymes involved in one gene product.  This is easily reducible to the familiar problem in one dimension. 
 \newline \newline
 The other property that sigmoidal curves are important for is the restorative property of signals to allow for noise and increase robustness.  For the signals to allow a certain amount of noise to enter the system, we would want the output thresholds of one gate to be as far away from the input thresholds of the next gate as possible.  Thus when noise gets added to the output signal, it still has a good chance to transmit the correct binary data to the next stage.  In addition, these components can be connected in a loop.  In electronics, since the outputs and inputs are measured against the same unit of measurement, the voltage, the additional requirement is that the gain must be greater than 1.  This means that the slope of the function should be greater than 1.  
-\newline \newline 
+\newline \newline
 
 \section{Dynamic Memory}
 %some intro about memory?
 %EE
 We have seen in the previous section how short term memory elements can be implemented with capacitors.  We examine some other ideal memory elements we would like as part of an asynchronous circuit, such as the Muller C-element. 
-The Muller C-element is useful in the design of asynchronous circuits.  If every signal in a circuit is connected with C-elements then it ensures that the circuit can run robustly and has the speed independence property.  Thus we would ideally want the elements we see in biological circuits to operate similarly to the C-element.  A common CMOS implementation of a C-element is shown with two inputs A and B, and an output C.  It operates similarly as the inverter example.  In this C-element example, when A and B are both high, the pull down network is activated, while there are open switches in the pull up network and the output is connected to the ground.  When both A and B are low, the opposite is true and the output is pulled to $V_{cc}$.  However when A and B are different signals ie A is high and B is low or when A is low and B is high, then there is no path through either the pull up or the pull down network and the previous value of the output is retained.  This state is called a 'hold'.
+The Muller C-element is useful in the design of asynchronous circuits.  If every signal in a circuit is connected with C-elements then it ensures that the circuit can run robustly and has the speed independence property.  Thus we would ideally want the elements we see in biological circuits to operate similarly to the C-element.  A common CMOS implementation of a C-element is shown with two inputs A and B, and an output C.  It operates similarly as the inverter example.  In this C-element example, when A and B are both high, the pull down network is activated, while there are open switches in the pull up network and the output is connected to the ground.  When both A and B are low, the opposite is true and the output is pulled to $V_{cc}$.  However when A and B are different signals ie A is high and B is low or when A is low and B is high, then there is no path through either the pull up or the pull down network and the previous value of the output is retained.  This state is called a 'hold'.  Note that this is different from a hold time, which is a synchronous digital circuit concept.  Hold time is the amount of time that a valid signal retains its value.  It is useful to know to ensure that the signal maintains its correct value to allow downstream gates to properly compute the output. This is also important to our system since we are using dynamic memory.
+%added hold time
 \begin{center}
 \includegraphics{celement}
 \end{center}
@@ -103,8 +106,47 @@ Set reset latches have a similar modes of operation with output high output low 
 \end{tabular}
 
 \end{center}
+As stated previously, the equation for a capacitor is:
 
-
+\[I(t)=C\frac{dV(t)}{dt}
+\]
+When we analyze the CMOS inverter connected to a load capacitance, when the input is high, the p-MOS is effectively off and the n-MOS operating in linear region can be approximately modeled as a resistor.  Equating the current from the resistor and capacitor, we find that the equation for Vout is:
+\[\frac{-V_{out}(t)}{R}=C\frac{dV_{out}(t)}{dt}
+\]
+When the input is low, the n-MOS is effectively off and the p-MOS operating in linear region can be approximated as a resistor.  Equating the current from the resistor and capacitor, the equation for Vout is:
+\[\frac{Vdd-V_{out}(t)}{R}=C\frac{dV_{out}(t)}{dt}
+\]
+\includegraphics[width=\textwidth]{mosinactionRC}
+These differential equations can be written in a more general form of 
+\[\frac{dV(t)}{dt}=C -\lambda \cdot V(t)
+\]
+Where $C$ and $\lambda$ are constants and the solution to this differential equation is an exponential of the form
+\[V(t)=((V_0\cdot\lambda-C)e^{(-\lambda\cdot t)}+C)/\lambda
+\]
+where $V_0$ is the initial value of V at time t=0
+\newline \newline
+Next we define some timing terminology.   Define the input thresholds as:  $in_{min0}$ is the smallest acceptable input to represent an input '0' and $in_{max0}$ is the largest acceptable input to represent an input '1'.  Similarly, $in_{min1}$ is the smallest acceptable input to represent an input '1' and $in_{max1}$ is the largest acceptable input to represent an input '1'.   $out_{max0}$ and $out_{min1}$ corresponds to the output signal after putting the input signal at the appropriate input thresholds through the gate.  $fanout_0$ and $fanout_1$ represent the '0' and '1' input thresholds to the next components respectively. \newline \newline
+Three values are of importance to us, the transition time between 0->1, the transition time between 1->0, and the time that the gate is in the hold state.  Using the inverter example, the transition time between 0->1 is when the output is initially a valid 0 (so the initial input is 1), at time t=0, the input changes to 0 which prompts the output to change to 1.  We assume an output low threshold of 0.8V ($out_{max0}$) and a fanout high threshold of 4V ($fanout_1$).  The transition time is the time it takes between the output from below the low threshold until the ouput reaches the high fanout threshold.
+\includegraphics[width=\textwidth]{t0to1}
+Rearranging the equation to find time elapsed:
+\[\Delta t_{0->g1}= -log(V_{ss}-fanout_1)/ \lambda+ log(V_{ss}-V_0)/ \lambda
+\]
+Where $V_{ss}$ is the steady state output of the gate after the output finishes transitioning, usually Vdd in this case. \newline \newline
+Similarly, the transition time between 1->0 is when the output transitions from a 1 to a 0.  We assume an output high threshold of 4.5V($out_{min1}$) and a fanout low threshold of 1V ($fanout_0$). \newline
+\includegraphics[width=\textwidth]{t1to0}
+The time elapsed is:
+\[\Delta t_{1->0}= -log(V_0-V_{ss})/ \lambda+ log(fanout_0-V_{ss})/ \lambda
+\]
+Where $V_{ss}$ is the steady state output of the gate after the output finishes transitioning, usually 0V in this case. \newline \newline
+The time a gate stays in the 'hold' state, is when the output switches and the charge on the capacitor discharges or accumulates but still has a valid 1 or 0 for some time.  So it is the time it takes between a high output to reach fanout high threshold as it is discharging, or a low output to reach fanout low threshold as it is charging. \newline
+\includegraphics[width=\textwidth]{hold0to1}
+\includegraphics[width=\textwidth]{hold1to0}
+The corresponding elapsed time are:
+\[\Delta t_{hold 0}= -log(V_{ss}-fanout_0)/ \lambda+ log(V_{ss}-V_0)/ \lambda
+\]
+\[\Delta t_{hold 1}= -log(V_0-V_{ss})/ \lambda+ log(fanout_1-V_{ss})/ \lambda
+\]
+Where $V_{ss}$ is usually Vdd in the first equation and 0V in the second one. Note that for an inverter the time for hold state is a lot less than the transitions from 0 to 1 or 1 to 0.\newline \newline
 \section{Biology equivalent}
 %BIO
 We expect biological systems to behave similarly to an asynchronous circuit because in biological systems there are no 'global clocks' that regulate the timing.  Because there is high variability between cells, and molecular interactions are of a stochastic nature, production from each gene element can have varying delay.  This variability differs from cell to cell and from one cycle to the next. Thus we would also expect a type of speed independence property to ensure that most of the time, the cells work reliably regardless of the random delays and advance through the cell cycle to produce new cells.
@@ -144,9 +186,9 @@ because the expression inside the log must be positive.  (Note that this means $
 \newline
 %something about robustness?
 
-\newline  \newline
-In our model we wish to verify the set reset and hold property of each gene gate.  We use the exponential solution to the ODE equation.  Given the appropriate inputs we would like for all of the set and and reset transitions to take a shorter length of time than the temporary hold states.  More formally, we would like the worst case/longest set and reset transition times to be shorter than the worst case/shortest hold times.  First we define some of the parameters and variables that we use.  Define the input thresholds as:  $in_{min0}$ is the smallest acceptable input to represent an input '0' and $in_{max0}$ is the largest acceptable input to represent an input '1'.  Similarly, $in_{min1}$ is the smallest acceptable input to represent an input '1' and $in_{max1}$ is the largest acceptable input to represent an input '1'.  $fanout_0$ and $fanout_1$ represent the '0' and '1' input thresholds to the next components respectively.  There is an additional constraint where fanout thresholds $fanout_0$ and $fanout_1$ must be between $g(in_{max0})$ and $g(in_{min1})$ so that all legal input values provide legal outputs that feed into the next layer of components to be processed.
-\newline \newline
+\newline 
+In our model we wish to verify the set reset and hold property of each gene gate.  We use the exponential solution to the ODE equation.  Given the appropriate inputs we would like for all of the set and and reset transitions to take a shorter length of time than the temporary hold states.  More formally, we would like the worst case/longest set and reset transition times to be shorter than the worst case/shortest hold times.  First we define some of the parameters and variables that we use.  Define the input thresholds as the previous section:  $in_{min0}$ is the smallest acceptable input to represent an input '0' and $in_{max0}$ is the largest acceptable input to represent an input '1'.  Similarly, $in_{min1}$ is the smallest acceptable input to represent an input '1' and $in_{max1}$ is the largest acceptable input to represent an input '1'.  $fanout_0$ and $fanout_1$ represent the '0' and '1' input thresholds to the next components respectively.  There is an additional constraint where fanout thresholds $fanout_0$ and $fanout_1$ must be between $g(in_{max0})$ and $g(in_{min1})$ so that all legal input values provide legal outputs that feed into the next layer of components to be processed.
+\newline
 To find the maximum and minimum times for set reset and hold, we analyze the equation for time.  To find the maximum set time, since set is when the output rises from '0' to '1' we can assume that $z_{ss}>z_f, z_0$ and use the second form of the time equation. $\Delta t$ is monotonically increasing in $z_f$ and monotonically decreasing in $z_0$.  Since $z_{ss}$ is involved in two terms we need further analysis to see its effects on time.  Taking the derivative with respect to $z_{ss}$:
 \[\frac{d\Delta t}{dz_{ss}}=- \frac{1}{(z_{ss}-z_f)}\frac{1}{\lambda}+ \frac{1}{(z_{ss}-z_0)}\frac{1}{\lambda}
 \]
