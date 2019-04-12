@@ -226,9 +226,13 @@ In some of the previous work they make additional assumptions such as the checki
 We solve the problem of SEUs by taking a semi-modular circuit (the original circuit) and applying a transformation to the circuit by duplicating all its circuit elements.  Due to the asynchronous nature of how signals are processed, the resulting half circuits may have signals of corresponding wires at different values.  To solve this problem we add C-elements to synchronize the two versions of the same signal.  In the rest of this chapter we define a way to compare two circuits and to show their equivalence.  Then we propose our transformation method and show that under normal operation (no faults), the fault tolerant circuit is equivalent to the original.  Finally we show that if an SEU occurs, one side of the fault tolerant circuit is equivalent to the original and we can still extract the signals that we desire.\\
 
 Other than the basic terminology for asynchronous circuits and state graphs, we also want terminology to compare two circuits and especially evaluate whether they implement the same state graph.  
-We first define a trace, to describe the different paths a circuit can take as it follows the state graph.  Different paths can occur because each state may have multiple transitions from that state.  We record the succession of states and transitions by the trace which is defined as follows:
-\begin{definition}A {\em trace} $\sigma$ of a circuit is a sequence of states of infinite length where $s_i$ is the $i^{th}$ term of the sequence.  Formally this is written as $\sigma: \mathbb{N} \to S$ and $T(s_i,s_{i+1})$ for $\forall i \in \mathbb{N}$.  We also use the $\sigma_n$ as shorthand to denote the sequence of the first n states of $\sigma$$\end{definition} 
-Our definition of trace includes the case where there is only one transition from each state of a state graph, that is a linear state graph.  \\
+We first define a {\em trace}, to describe a path the circuit can take as it follows the state graph.  Different paths can occur because each state may have multiple alternative transitions from that state.  We record the succession of states and transitions by the trace which is defined as follows:
+\begin{definition}A {\em trace} $\sigma$ of a circuit is a sequence of states of finite or infinite length and $s_i$ is the $i^{th}$ term of the sequence.  Formally this is written as $\sigma: 0\ldots n-1 \to S$ and $n \in \mathbb{N}$.
+ Also every pair of consecutive states are transitions such that $T(s_i,s_{i+1})$ for $ 0\leq i\leq n-2$.  We also use the $\sigma_n$ as shorthand to denote the sequence of the first n states of $\sigma$\end{definition} 
+Thus a circuit as well as its underlying state graph corresponds to a set of traces.  
+set of initial states
+and state graph has a set of traces
+Our definition of trace includes the case where there is only one transition from each state of a state graph, that is, a linear state graph.  \\
 %add finite traces
 % all states or just the state graph ones
 
@@ -292,7 +296,7 @@ By symmetry this is also true for the B half if we exchange A and B in the state
 %In addition, if wire $w$ is not excited in the original circuit $f_w(s_n|_I)=w$, then in the duplicated circuit half $f_w(s_n|_I)=x^A=w^A$.  
 \end{lemma}
 \begin{proof}
-Without loss of generality we prove that this property holds for the A half, the same reasoning can then be applied to the B half.  We prove this lemma by induction on all traces of the circuit of length $n$.  The induction hypothesis is:
+Without loss of generality we prove that this property holds for the A half, the same reasoning can then be applied to the B half.  We prove this Lemma by induction on all traces of the circuit of length $n$.  The induction hypothesis is:
 \begin{itemize}
 \item Assume that $\sigma$ is a trace in the fault tolerant circuit.  Then $\sigma_n$ maps to $h^{A}(\sigma_n)$, which is a prefix of a trace of the original circuit.
 \item Every logic block is in a semi-modularity consistent state.  %newly added, a new property outside of \sigma_n mapping to h^A(\sigma_n)
@@ -309,8 +313,16 @@ We show in the base case that the induction hypotheses hold for any state in the
 
 The induction step is to assume that the induction hypotheses is true for $\sigma_k$, the subsequence for a trace $\sigma$ with length greater than or equal to $k$.  We will prove that the induction hypothesis is also true for $\sigma_{k+1}$, if it exists.  In particular for all possible $s_{k+1}$ we show that either $h^A(s_{k})=h^A(s_{k+1})$ or $T(h^A(s_{k}),h^A(s_{k+1}))$ to satisfy the first induction hypothesis.  Then we show that for all possible $s_{k+1}$ logic block remains in a semi-modularity consistent state.  Finally for all wires in $s_{k+1}$, the third induction hypothesis is true.\\
 
-From state $s_k$, we look at all possible transitions; a transition may only occur on excited gates or c-elements.  If the transition occurs on the other half then no wire values changed in the A-half and the induction hypothesis remain true.  Thus we only need to consider the wires $w$ which are excited in the original circuit in state $h^A(s_k)$ and its corresponding wires in the A-half circuit.  For each excited wire $w$, the last induction hypothesis narrows the possible wires that can be excited in state $s_k$ and we examine the properties of the next state for each transition that can occur. %logic gate excited = c1^A excited
+From state $s_k$, we look at all possible transitions; a transition may only occur on excited gates or c-elements.  If the transition occurs on the other half then no wire values changed in the A-half and the induction hypothesis remain true.  Thus we only need to consider the wires $w$ which are excited in the original circuit in state $h^A(s_k)$ and its corresponding wires in the A-half circuit.  For each excited wire $w$, the last induction hypothesis narrows the possible wires that can be excited in state $s_k$ and we examine the properties of the next state for each transition that can occur.  Refer to figure \ref{fig:l1helper} for an example of what happens in each of the cases.  These are drawn for when $w$ transitions from $0\rightarrow1$ but the transition from $1\rightarrow0$ can also be visualized with the same figure by inverting 1's and 0's. %logic gate excited = c1^A excited
 %possibly add graph to illustrate this
+\begin{figure}
+  \centering
+    \includegraphics[width=\textwidth]{gatewl1}
+  \caption{Different cases of the induction step for proving Lemma 1.  a) case 1, b) case 2, c) case 3, d) case 4}
+  \label{fig:l1helper}
+\end{figure}
+
+
 \begin{itemize}
 \item The first case is for an excited wire $w$, the corresponding $c1^A$ is excited and $c1^A=c2^A=c3^A=w^A$, then $c1^A$ transitions.  Then in $s_{k+1}$, the only changes are that $c1^A$ is no longer excited and $c1^A\neq c2^A$, thus wire $w$ satisfies the third induction hypothesis.  Since the transition occurred on an intermediate wire, the set of excited wires in state $h^A(s_{k+1})$ of the original circuit does not change and for both excited wires $v$ where $v\neq w$ and not excited wires the third induction hypothesis carries over from $s_k$ to $s_{k+1}$.  Thus the third induction hypothesis is true for all output wires.  Also since the output wires did not change, then $h^A(s_k)=h^A(s_{k+1})$ satisfying the first induction hypothesis.  The output wires not changing also allow the logic blocks to stay in a semi-modularity consistent state.   The induction hypotheses are true for any transition from this case.  %don't know if this needs to be explained more (and add that the non-excited wires are still non-excited?)
 %since the inputs to the gate and the intermediate wires did not transition, then the gate is excited or $y^{A,B}\neq v^{A,B}$.  
@@ -362,7 +374,7 @@ For any state in a trace of the fault tolerant circuit, the wire blocks are in o
 \begin{proof}
 We show by induction that for the fault tolerant circuit, each wire block is in one of the cases in the above figure.  The figure halves the number of cases, as case 11 is the inversion of case 1 (with the 0's and 1's inverted) and from case 11 the state transitions go through the same cases in figure \ref{fig:l21} from 1-11 but inverted.  Thus we only need to analyze possible transitions from each case up to case 10.  Also, Lemma 1 applies to both A half and B half.\\
 
-We look at the base case for every wire $w$ in the original circuit.  Because the duplicated circuit starts at the same valid initial state: $w=c1^A=c2^A=c3^A=w^A=c1^B=c2^B=c3^B=w^B$.  A wire $w$ can be either excited or unexcited in the original circuit. If the wire $w$ is unexcited, applying lemma 1,  A and B halves of $w$ in the duplicated circuit are in case 1 (or case 11, we will here on ignore the inverted 1's and 0's states, but each case technically represents two states).  If $w$ is excited then Lemma 1 states that the logic blocks must be excited, which is case 2.  Thus this property is true for the base case. \\
+We look at the base case for every wire $w$ in the original circuit.  Because the duplicated circuit starts at the same valid initial state: $w=c1^A=c2^A=c3^A=w^A=c1^B=c2^B=c3^B=w^B$.  A wire $w$ can be either excited or unexcited in the original circuit. If the wire $w$ is unexcited, applying Lemma 1,  A and B halves of $w$ in the duplicated circuit are in case 1 (or case 11, we will here on ignore the inverted 1's and 0's states, but each case technically represents two states).  If $w$ is excited then Lemma 1 states that the logic blocks must be excited, which is case 2.  Thus this property is true for the base case. \\
 
 In the induction step, assume that the induction hypothesis is true for state $s_k$ and we show that it is true for $s_{k+1}$.  \\
 
@@ -373,7 +385,7 @@ Case 1:  Nothing within the wire block can transition.  It is waiting for its in
 \item
 Case 2a/2b:  In case 2a, $c1^A$ is excited and can transition to case 3a.  Similarly case 2b can transition to case 3c.  From both cases it is possible that the unexcited logic block becomes excited and go to case 3b at the next state.  However the excited logic block cannot become unexcited (without the corresponding $c1$ transition) due to semi-modularity and Lemma 1.
 \item
-Case 3a/3b/3c:  In case 3a (3c), it is possible for the logic block in B-half (A-half) to become excited, and change to 4a (4b).  The logic block in A-half (B-half) cannot be excited again while $c1^A=1$ ($c1^B=1$) because that violates lemma 1.  From 3b, when $c1^A$ or $c1^B$ transitions, the next state is 4a or 4b.  The excited logic blocks cannot become unexcited due to semi-modularity and Lemma 1.
+Case 3a/3b/3c:  In case 3a (3c), it is possible for the logic block in B-half (A-half) to become excited, and change to 4a (4b).  The logic block in A-half (B-half) cannot be excited again while $c1^A=1$ ($c1^B=1$) because that violates Lemma 1.  From 3b, when $c1^A$ or $c1^B$ transitions, the next state is 4a or 4b.  The excited logic blocks cannot become unexcited due to semi-modularity and Lemma 1.
 \item
 Case 4a/4b:
 A logic block is excited in both cases and can transition to case 5.  The excited logic block cannot become unexcited due to semi-modularity and Lemma 1.  The already transitioned logic block (unexcited) cannot be excited again due to same reasoning as above (Lemma 1).
@@ -419,7 +431,15 @@ Next we will show that if a single transient fault occurs on any wire, the fault
 For all traces $\sigma$ in the duplicated circuit, with a single transient fault occurring on a $c2$ or $c3$ wire of some wire $w$ at any point in the trace, then $h^{A}(\sigma_n)$ and $h^{B}(\sigma_n)$ is a prefix of a trace in the original circuit for all $n \in \mathbb{N}$.
 \end{lemma}
 \begin{proof}
-Without loss of generality we can show this is true if a transient fault occurs in the $A$ half.  We use NuSMV to verify that if a transient fault occurs on one of the $c2$ or $c3$ wires of wire $w$, the input-output characteristic of the local C-element chain do not change.  Under normal operation, by Lemma 2.1 the pair of inputs ($c1^A$, $c1^B$) and outputs ($w^A$, $w^B$) cycle through 00 00 $\rightarrow$ 01 00 or 10 00 $\rightarrow$ 11 00 $\rightarrow$ 11 01 or 11 10 $\rightarrow$ 11 11 or 11 11 $\rightarrow$ 10 11 or 01 11 $\rightarrow$ 00 11 $\rightarrow$ 00 10 or 00 01 $\rightarrow$ 00 00.  Thus the property verified in NuSMV is that when a single transient fault occurs on wires $c2$ or $c3$, the cycle mentioned previously is always true.    %We first deal with the $0\to 1 \to 0$ fault on $c2^A$.  
+Without loss of generality we can show this is true if a transient fault occurs in the $A$ half.  We use NuSMV to verify that if a transient fault occurs on one of the $c2$ or $c3$ wires of wire $w$, the input-output characteristic of the local C-element chain do not change.  Under normal operation, by Lemma 2.1 the pair of inputs ($c1^A$, $c1^B$) and outputs ($w^A$, $w^B$) cycle through the wire values shown in figure \ref{fig:l3helper}.  Thus the property verified in NuSMV is that when a single transient fault occurs on wires $c2$ or $c3$, the cycle mentioned previously is always true.    
+\begin{figure}
+  \centering
+    \includegraphics{L3helperfull}
+  \caption{The projection of the states in figure \ref{fig:l21} from Lemma 2.1 onto the wires $c1^A$, $c1^B$ and $w^A$, $w^B$.  This forms the input and output characteristic of a wire block under normal operation.}
+  \label{fig:l3helper}
+\end{figure}
+
+%We first deal with the $0\to 1 \to 0$ fault on $c2^A$.  
 We go through an example of a transient on $c3^A$ to demonstrate why this is true.  By Lemma 2.1 the normal circuit will be at some state in figure \ref{fig:l21}, so we analyze the transient occurring at each state in figure \ref{fig:l21}.
 \begin{itemize}
 	\item
@@ -432,7 +452,7 @@ If the current state is 7 progresses the state to 8a, the correct transition.
 	\item
 If the circuit experiences a fault in state 9, it will revert back to state 8b.  
 	\item
-If the circuit experiences a fault in state 10a or 10b, $w_B$ or $w_A$ will go from excited to non excited respectively.  $c3^A$ will be excited but there are no other excitations in the local circuit.  Thus $w^A$ and $w^B$ do not change and by semi-modularity the logic gates to these wires cannot be excited or transition on any subsequent states while $w^A$ and $w^B$ do not change (same argument as in lemma 2.1 can be used since the other wire blocks do not have transients and thus in one of the states in cases 2.1).  Then the local circuit will stay in this transient induced state until $c3^A$ finally changes and the circuit returns to its state before the transient.
+If the circuit experiences a fault in state 10a or 10b, $w_B$ or $w_A$ will go from excited to non excited respectively.  $c3^A$ will be excited but there are no other excitations in the local circuit.  Thus $w^A$ and $w^B$ do not change and by semi-modularity the logic gates to these wires cannot be excited or transition on any subsequent states while $w^A$ and $w^B$ do not change (same argument as in Lemma 2.1 can be used since the other wire blocks do not have transients and thus in one of the states in cases 2.1).  Then the local circuit will stay in this transient induced state until $c3^A$ finally changes and the circuit returns to its state before the transient.
 \end{itemize}
 %c3
 A similar reasoning would then apply if a transient fault occurs in $c1^A$, and also for the $B$ half.  
