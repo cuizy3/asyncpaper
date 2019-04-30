@@ -420,7 +420,7 @@ For any trace of the fault tolerant circuit, each wire block follow the state di
 \begin{proof}
 We show this lemma by induction.  The state diagram in Figure \ref{fig:l21} is incomplete in the sense that after case 11, there are more transitions.  However, case 11 is symmetric to case 1 with only the 0's and 1's inverted and so the transitions from case 11 is also symmetric to the transitions from case 1 with 0's and 1's inverted until it loops back to case 1.  Because of this symmetry, we only need to analyze possible transitions from each case up to case 10.  Also, Lemma 1 applies to both A half and B half which we will use in the body of this proof.\\
 
-We look at the base case of $\sigma_1$ which is also $s_1$ initialized as a valid initial state.  For every wire $w$ in the original circuit, the valid initial state initializes the wires in the fault tolerant circuit to state a of Figure \ref{fig:l1helper} if wire $w$ is excited, or initializes to state e of Figure \ref{fig:l1helper} if wire $w$ is unexcited.  Because the initialization is the same for both halves, then if $w$ is excited then the logic blocks in the fault tolerant circuit are in case 2 of Figure \ref{fig:l21} and if $w$ is unexcited then the logic blocks are in case 1 of Figure \ref{fig:l21}.  Thus the lemma property holds for the base case. \\
+We look at the base case of $\sigma_1$ which is also $s_1$ initialized as a valid initial state.  For every wire $w$ in the original circuit, the valid initial state initializes the wires in the fault tolerant circuit to state a of Figure \ref{fig:l1helper} if wire $w$ is excited, or initializes to state e of Figure \ref{fig:l1helper} if wire $w$ is unexcited.  Because the initialization is the same for both halves, then if $w$ is excited then the logic blocks in the fault tolerant circuit are in case 3b of Figure \ref{fig:l21} and if $w$ is unexcited then the logic blocks are in case 1 of Figure \ref{fig:l21}.  Thus the lemma property holds for the base case. \\
 %is this the pick a trace thing again? (instead of for all traces of length n)
 
 In the induction step, assume that the induction hypothesis is true for trace $\sigma_k$ and we show that it is true for $\sigma_{k+1}$ by looking at state $s_k$.  \\
@@ -500,38 +500,39 @@ Next we consider what happens to the fault tolerant circuit under a single trans
 \begin{definition}A transient fault on a wire $w$ causes a transition $w= \lnot w^{prev}$.  After this event it is assumed that the wire can freely transition based on its inputs. %do I need to talk about when transient is not ~x?  ie hold same value?  That's the same as a longer delay
 \end{definition}
 Next we show that if a single transient fault occurs on any wire, the fault free half circuit will be equivalent to the original circuit in some sense.  
-Suppose a fault happens in the B-half, according to Lemma 1, the A-half can never be in a state inconsistent to the original circuit.  But we have not proved that the A-half does not stop prematurely compared to the original circuit.  Towards this goal, we prove two lemmas:  Lemma 3 shows if a single fault occurs on the $c2$ or $c3$ wires of some wire $w$, the output wires still follow the original state graph.  Lemma 4 shows if a fault occurs to any of the other wires, then the $c2$ or $c3$ wires follow a similar order to the non-fault case and thus the output wire pairs can never be different at deadlock.  Then these lemmas combine to show that there is no deadlock.
+Suppose a fault happens in the B-half, according to Lemma 1, the A-half can never be in a state inconsistent to the original circuit.  But we have not proved that the A-half does not stop prematurely compared to the original circuit.  Towards this goal, we prove two lemmas:  Lemma 3 shows if a single fault occurs on the $c2$ or $c3$ wires of some wire $w$, the output wires still follow the original state graph.  Lemma 4 shows if a fault occurs on any of the other wires, then the $c2$ or $c3$ wires follow a similar state graph as the non-fault case and thus the output wire pairs can never be different at deadlock.  Then these lemmas combine to show that there is no deadlock.
 
 %To do this we prove some properties that are true when a single transient fault occurs on a wire.  We partition the wires into two sets based on their properties when a single transient fault is added.  Lemma 3 shows that if a single fault occurs on the $c2$ or $c3$ wires for some wire $w$, the output wires still follow the original state graph.  Lemma 4 shows that if a fault occurs to any of the other wires, then the $c2$ or $c3$ wires follow a similar order to the non-fault case and thus the output wire pairs can never be different at deadlock.  Then we combine these Lemmas to show that there is no deadlock.
 
 \begin{lemma}[3]
 For any trace $\sigma$ in the duplicated circuit, if a single transient fault occur on wire $c2^B$ or $c3^B$ of some wire block $w$ at any point in the trace, then $h^{A}(\sigma_n)$ is a prefix of a trace in the original circuit for all $n \in \mathbb{N}$.
 \end{lemma}
-\begin{proof}
-We use NuSMV to verify that if a transient fault occurs on wire $c2^B$ or $c3^B$ of wire block $w$, the input-output characteristic of the local C-element chain do not change.  Under normal operation, by Lemma 2.1, the pair of inputs ($c1^A$, $c1^B$) and outputs ($w^A$, $w^B$) cycle through the wire values shown in Figure \ref{fig:l3helper}.  Thus the property verified in NuSMV is that when a single transient fault occurs on wires $c2^A$ or $c3^B$, the transitions follow the state diagram in Figure \ref{fig:l3helper}.    
+%need major rewording maybe after defining faulty trace
 \begin{figure}
   \centering
-    \includegraphics{flowl2c3a}
+    \includegraphics{L3helperfull}
   \caption{The projection of the states in figure \ref{fig:l21} from Lemma 2.1 onto the wires $c1^A$, $c1^B$ and $w^A$, $w^B$.  This forms the input and output characteristic of a wire block under normal operation.}
   \label{fig:l3helper}
 \end{figure}
 
+\begin{proof}
+We use NuSMV to verify that if a transient fault occurs on wire $c2^B$ or $c3^B$ of wire block $w$, the input-output characteristic of the local C-element chain does not change.  Under normal operation, by Lemma 2.1, the pair of inputs ($c1^A$, $c1^B$) and outputs ($w^A$, $w^B$) follow the state diagram shown in Figure \ref{fig:l3helper}.  Thus the property verified in NuSMV is that when a single transient fault occurs on wires $c2^B$ or $c3^B$, the transitions follow the state diagram in the figure.  The fault is masked when this happens. \\
+% this is kind of by induction, the inputs from the other parts of the system will be correct as long as the output of $w$ is correct.  The error is masked if the input output characteristic is still the same
 %We first deal with the $0\to 1 \to 0$ fault on $c2^A$.  
-We go through an example of a transient on $c3^B$ to demonstrate why this is true.  By Lemma 2.1 the normal circuit is in a state in Figure \ref{fig:l21}, so we observe the transient induced trace with the transient occurring at each state in Figure \ref{fig:l21}.
+We go through an example of a transient fault on $c3^B$ to demonstrate why the resulting trace follows the state diagram.  By Lemma 2.1, the normal circuit is in a state in Figure \ref{fig:l21}, so we observe all possible transient induced traces by placing a transient starting at each state in Figure \ref{fig:l21}.
 \begin{itemize}
 	\item
-If the current state is 1, 2a, 2b, 3a, 3b, 3c, 4a, 4b, 5, 6a, 6b the transient does not cause any changes in excitations in the local circuit.  In particular since $w^A$ and $w^B$ do not change, then by semi-modularity the excited/unexcitedness of logic blocks are maintained.  So the transient induced state graph is a copy of the portion containing states 1, 2a, 2b, 3a, 3b, 3c, 4a, 4b only with $c3^B$ value flipped. Eventually they all transition to state 8b and proceed from there as usual.
+If the current state is 1, 2a, 2b, 3a, 3b, 3c, 4a, 4b, 5, 6a, or 6b in Figure \ref{fig:l21}, the transient does not change excitations in the local circuit.  In particular, since $w^A$ and $w^B$ do not change, then by semi-modularity the excitation of logic blocks do not change.  So the transient fault induced state graph is a copy of Figure \ref{fig:l21} containing states 1, 2a, 2b, 3a, 3b, 3c, 4a, 4b only with $c3^B$ value flipped. Eventually all fault states transition to state 8b and proceed from there as usual.
 	\item
-If the current state is 7, the transient changes the state to 8b, a valid transition.	
+If the current state is 7, then the transient changes the state to 8b, a valid transition.	
       \item
-If the current state is 8a, the transient changes the state to 9, a valid transition.	
+If the current state is 8a, then the transient changes the state to 9, a valid transition.	
 	\item
-      If the current state is 8b then when the transient occurs on $c3^B$, the state
- becomes identical to state 7.  It will then proceed from state 7 as usual.   
+      If the current state is 8b, then the transient reverts the state back to state 7.  It will then proceed from state 7 as usual.   
 	\item
-If the current state is 9 then when the transient occurs, the state reverts back to state 8a.  
+If the current state is 9, then the transient reverts the state back to state 8a.  Again, it will proceed from state 8a as usual.  
 	\item
-If the current state is 10a or 10b, then when the transient occurs, $w_B$ or $w_A$ changes from excited to non excited respectively.  Wire $c3^B$ is excited but there are no other excitations in the wire block.  Thus $w^A$ and $w^B$ do not change and by semi-modularity the logic gates to these wires cannot be excited in any subsequent states while $w^A$ and $w^B$ are mismatched (by the same argument as in Lemma 2.1 for cases 10a/10b since the other wire blocks do not have transients).  Then the wire block will stay in this transient induced state until $c3^B$ finally transitions and the wire block returns to its state before the transient.
+If the current state is 10a, then when the transient occurs, $w_B$ changes from excited to non excited; and if the current state is 10b, $w_A$ changes.  In both cases, wire $c3^B$ is excited but there are no other excitations in the wire block.  Thus $w^A$ and $w^B$ stay mismatched and by semi-modularity, the logic blocks in these wire blocks cannot be excited in any subsequent states (by the same argument as in Lemma 2.1 for cases 10a/10b).  Then the wire block will stay in this transient induced state until $c3^B$ finally transitions and the wire block returns to either 10a or 10b.
 \end{itemize}
 %c3
 Similar reasoning would then apply if a transient fault occurs in $c2^B$.  
@@ -541,36 +542,37 @@ By symmetry this is also true for transients in the A half if we exchange A and 
 %\includegraphics[width=.8\textwidth]{gatew}
 \begin{figure}
   \centering
-    \includegraphics{flowl4c3v2}
+    \includegraphics{flowl4c3a}
   \caption{The wires in each row are in order of $c1$, $c2$ and $c3$.  Each row represents half of the duplicated circuit, ie. top row are A half wires and bottom row are B half wires.  Note that case 5 transitions according to case 1 except with the 0's and 1's inverted.  The states transitions after that are inverted versions of state 2-4 until it transitions back to state 1 (uninverted).}
   \label{fig:l4}
 \end{figure}
 
-We showed that if a fault occurs on $c2$ or $c3$ wires then there is no observable differences in the output wires between the faulty circuit and fault free circuit.  
-Next we show that if a fault occurs on the remaining wires, then the $c2$ or $c3$ wires of each wire block of the circuit transitions according to Figure \ref{fig:l4} which is analogous to Lemma 2.1.  The main difference is that because a fault may be present, we cannot predict the value of either $c1^A$ or $c1^B$.  The following property is true despite not knowing one of the $c1$ wire values and leads to the conclusion that the output wire pairs can never be mismatched at deadlock.  
+We showed that if a fault occurs on the $c2$ or $c3$ wires then there are no observable differences in the output wires between the faulty circuit and the fault free circuit.  
+Next we show that if a fault occurs on the remaining wires, then the $c2$ or $c3$ wires of each wire block of the circuit transition according to Figure \ref{fig:l4}.  The state graph of Figure \ref{fig:l4} is similar to projecting the state graph of Figure \ref{fig:l21} onto the $c1$, $c2$ and $c3$ wires, with the exception that the $c1$ wire value is not known in the faulty half.  Despite this, the following lemma is true and we can then conclude that the output wire pairs are never mismatched at deadlock.  
 
 \begin{lemma}[4]
-For all traces $\sigma$ in the fault tolerant circuit, if a fault occurs in the B-half on a wire other than $c2^B$ or $c3^B$, the following property is true: the $c2$ and $c3$ wires of each wire block $w\in W$ are always in a state of Figure \ref{fig:l4}.
+For all traces $\sigma$ in the fault tolerant circuit, if a fault occurs in the B-half on a wire other than $c2^B$ or $c3^B$, the following property is true: the $c2$ and $c3$ wires of each wire block of the circuit follow the state graph of Figure \ref{fig:l4}.
 \end{lemma}
 \begin{proof}
-The fault is in the B-half so Lemma 1 applies for the A half.  We show by induction that when the fault is not in $c2^B$ and $c3^B$, at any state $s_n$ from the trace $\sigma$, $c1$, $c2$ and $c3$ for all wires $w$ follow the state transitions in figure \ref{fig:l4}.  Again we only analyze for cases 1-5 as 6 onwards behave identically to cases 1-5 except with the 0's and 1's inverted.\\
+The fault is in the B-half so Lemma 1 applies for the A-half.  We show by induction that when the fault is not in $c2^B$ and $c3^B$, in the resulting trace, $c1$, $c2$ and $c3$ for all wires $w$ follow the state transitions in Figure \ref{fig:l4}.  We only analyze for cases 1-5 because transitions from case 6 is symmetric to transitions from case 1 with 0's and 1's inverted until the state ends back in case 1.\\
 
-The base case is for the valid initial state with no faults, projecting the states of Figure \ref{fig:l21} from Lemma 2.1 to just the $c1$, $c2$ and $c3$ wires shows this is true. \\
+The base case of $\sigma_1$ consists of state $s_1$ which is the valid initial state with no faults.  As noted in Lemma 2.1, the state of each of the wire blocks must be in case 1 or case 3b of Figure \ref{fig:l21}.  Projecting these states onto the $c1$, $c2$ and $c3$ wires results in case 1 in Figure \ref{fig:l4}, thus the base case satisfies the induction hypothesis.\\
 
-In the induction step we assume $s_k$ is a state where each wire $w$ is in a case of Figure \ref{fig:l4}, then we look at all possible next states $s_{k+1}$.  We don't assume anything about the non $c2$ and $c3$ wires for the B-half so that $c1^B$ may change values due to a fault.  However we do expect $c1^B$ to be either a 1 or 0 and that even with hazards on $c1^B$, the $c2$ wires transition to either 0 or 1.  We indicate the possibly faulty $c1^B$ by the symbol X.
+In the induction step we assume that $\sigma_k$ follows Figure \ref{fig:l4} and in particular, each wire block at state $s_k$ is in a case of the figure.  For each case that a wire block may be in, we then investigate the case changes in all possible next states $s_{k+1}$.  It is possible that a fault has already been introduced in the B-half on wires other than $c2$ and $c3$, so that $c1^B$ may be affected by the fault.  Despite the possibility of a fault, we assume that wire $c1^B$ has value of either 0 or 1 and that even with hazards on $c1^B$, the $c2$ wires transition to either 0 or 1.  The possibly faulty wire value $c1^B$ is represented by the symbol X.  In all the cases below we do not consider if $c1^B$ transitions because that will result in the wire block staying in the same case.
 \begin{itemize}
 	\item
-Case 1:  $c2$, $c3$ are not excited.  $c1^B$ can be excited depending on the inputs to the logic block.  Therefore, if there is a transition from this state it must be to case 2.
+Case 1:  $c2$, $c3$ are not excited.  $c1^A$ can be excited depending on the inputs to the logic block.  Therefore, a transition from this case must be to case 2.
 \item
-Case 2/3a/3b:  $c2$ can be excited depending on $c1^A$.  $c1^B$ cannot transition to 0 due to Semi-Modularity of wire $w$ and Lemma 1.  Therefore, if there is a transition it must be from case 2 to case 3a or 3b, and case 3a or 3b to case 4.
+Case 2/3a/3b:  $c2$ can be excited depending on $c1^B$.  $c1^A$ cannot be excited to 0 due to semi-modularity of wire $w$ and Lemma 1.  Therefore, a transition from case 2 must be to case 3a or 3b, and from case 3a or 3b to case 4.
 %I might need to show the excited ness of the good logic gate
 \item
-Cases 4/5a/5b:  $c1^B$ cannot transition to 0 due to the same reasoning above.  $c2$ is not excited. The only possible transitions are on the $c3$ wires and since there are no faults on them they must transition from case 4 to case 5a or 5b, and from case 5a or 5b to 6.
+Cases 4/5a/5b:  $c1^A$ cannot be excited to 0 due to the same reasoning above.  The $c2$ wires are not excited but the $c3$ wires are excited.  Therefore, a transition from case 4 must be to case 5a or 5b, and from case 5a or 5b to 6.
 \end{itemize}
-By induction, the property we set out to prove is true, the $c2$ and $c3$ wires will be in a case of figure \ref{fig:l4}. 
-The same logic applies to when a fault occurs in the B half and the A half is fault free.  
+Thus, in the next state $s_{k+1}$, all wire blocks either stay in the same case or transition according to Figure \ref{fig:l4}.  
+By induction, the trace $\sigma$ also follows Figure \ref{fig:l4}.  
 \end{proof}
-The importance of this Lemma is that at most one of $c2$ or $c3$ pairs can be mismatched.  The next theorem shows that this implies all output pairs at deadlock must be equal so there is a possible next condition which contradicts the definition of deadlock.  Thus the fault tolerant circuit does not deadlock under a single transient fault.
+By symmetry, this is also true if the fault occurs in the A half.  
+The importance of this Lemma is that at most one of $c2$ or $c3$ pairs can be mismatched.  The next theorem shows that this property implies all output wire pairs at an assumed deadlock state must be equal, which causes a contradiction, and thus the fault tolerant circuit does not deadlock under a single transient fault.
 
 %Then the following corollary holds:
 %\begin{corollary}[4.2]
@@ -581,21 +583,21 @@ The importance of this Lemma is that at most one of $c2$ or $c3$ pairs can be mi
 When a single transient fault occurs, if $\sigma$ is a trace in the fault tolerant circuit, then one of $h^{A}(\sigma_n)$ or $h^{B}(\sigma_n)$ (the non faulty half) for all $n \in \mathbb{N}$ is a prefix of a trace in the original circuit.  And the circuit does not deadlock.  
 \end{theorem}
 \begin{proof}
-Without loss of generality we can assume the fault occurs in the A half of the circuit.  First by Lemma 3 we know that if the fault occurs on $c2$ or $c3$ wire the circuit does not deadlock.  Thus we only look at when the fault occurs on all other wires. 
+Without loss of generality, we can assume the fault occurs in the B half of the circuit.  First by Lemma 3, we know that if the fault occurs on the $c2$ or $c3$ wires, then there is no observable differences on the output wires.  Thus we look at when the fault occurs on the remaining wires. 
 Next, we prove that a deadlocked circuit in this scheme must have at least one pair of output wires which have different values.  That is $w^A\neq w^B$ for some wire $w$.
 This is shown by contradiction.  Assume that the circuit is deadlocked at state $s$ and $v^A = v^B$ for all wires $v$ from the original circuit.  If a transient occurs, one can wait until that wire is free to transition.  There
- must be a wire $w$ that is excited in the state $h^B(s)$ in the original circuit and we look at that wire block in the duplicated circuit.  We examine each case in Lemma 4.
+ must exist a wire $w$ that is excited in the state $h^A(s)$ in the original circuit and for that wire block in the duplicated circuit, by Lemma 4 it must also be in a case in Figure \ref{fig:l4}.  We examine each case in turn.
 \begin{itemize}
 	\item
-	Case 1: Since $w$ is excited then by Lemma 1 $c1^B$ or $w^B$ must be excited and can transition.
+	Case 1: Since wire $w$ in the original circuit is excited, then by Lemma 1, the wire block $w$ is in case a or d in Figure \ref{fig:l1helper} and wires $c1^A$ or $w^A$ can transition.
 \item
-Case 2:  $c1^A$ may be 0 or 1.  If $c1^A=0$, since the inputs to A half and B half are equal then $c1^A$ must be excited and can transition to 1.  If $c1^A=1$ then it can transition to case 3a or 3b.
+Case 2:  Wire $c1^B$ may be 0 or 1.  If $c1^B=0$, since the inputs to A half and B half are equal then $c1^B$ must be excited and can transition to 1.  If $c1^A=1$ then the wire block can transition to case 3a or 3b.
 \item
-Case 3a/3b:  $c1^A$ may be 0 or 1.  If $c1^A=0$, since the inputs to A half and B half are equal then $c1^A$ must be excited and can transition to 1.  If $c1^A=1$ then it can transition to case 4.
+Case 3a/3b:  Wire $c1^B$ may be 0 or 1.  If $c1^B=0$, again $c1^B$ can transition to 1.  If $c1^B=1$ then it can transition to case 4.
 \item
-Case 4/5a/5b:  $c3$ is excited and can transition.
+Case 4/5a/5b:  Wire $c3$ is excited and can transition. 
 \end{itemize}
-Thus a transition can always occur and the circuit is not deadlocked which leads to a contradiction.  To remain deadlocked, it must be true that there exists a wire where $w^A\neq w^B$, which implies its $c1^A\neq c1^B$ and $c2^A\neq c2^B$ and $c3^A\neq c3^B$.  But we have shown in Lemma 4 that $c2^A\neq c2^B$ and $c3^A\neq c3^B$ cannot occur at the same time under a single transient fault. Thus deadlock is not possible.  And applying Lemma 1, $h^B(\sigma_n)$ is a prefix of a trace in the original circuit. 
+Thus a transition can always occur and the circuit is not deadlocked which leads to a contradiction.  To remain deadlocked, it must be true that there exists a wire where $w^A\neq w^B$, which implies its $c1^A\neq c1^B$ and $c2^A\neq c2^B$ and $c3^A\neq c3^B$.  But this is not a possible case by Lemma 4. Thus deadlock is not possible when there is a single transient fault.  And by Lemma 1, $h^A(\sigma_n)$ is a prefix of a trace in the original circuit. 
 \end{proof}
 
 \bibliography{biblio}
