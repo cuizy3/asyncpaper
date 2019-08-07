@@ -42,6 +42,7 @@ Digital circuits can be divided into two types, synchronous and asynchronous.  T
 %possible picture of clock and flip flops?.... redraw as my own
 
 Asynchronous circuits, as the name suggests, do not depend on a clock. As a result there are varying time delays in its components. The goal of designing asynchronous circuits is to make circuits that achieves some specification in spite of the time delays. That is, irrespective of the time delays, the circuit behaves the same way. One main reason that asynchronous circuits are used is that because it does not require clocks to propagate signals, instead as soon as one logic element finishes the signal goes directly to the next element.  This can allow the circuits to have speedups as it is not waiting for the slowest element for each clock cycle.  The resulting circuit is also very robust as it already accounts for possible variations in manufacturing that contribute to varying time delays.  Additionally even in synchronous systems, small asynchronous circuits are needed to match the inputs coming in from different circuits with different clock frequencies or from the outside world.  For large synchronous circuits clock skew from different parts of the system is also an issue and may be solved with asynchronous methods. \\ %Martin did not give references for these....prob ok then
+
 \includegraphics[width=\textwidth]{asyncex}
 \captionof{figure}{Example of a simple asynchronous circuit.  Note that there are no clocks and the signals can propagate at any time}
 
@@ -60,6 +61,7 @@ In this work, we propose a new fault tolerant circuit transformation on asynchro
 
 In the rest of this work, in chapter two, I will first introduce the different types of common faults and their causes, as well as the common fault models that researchers use when investigating these faults.  Then I will go into depth about the asynchronous circuit models that are relevant to this work.  I will then go through the existing body of work on fault tolerant solutions for both types of circuits with an emphasis on asynchronous circuits.  In chapter three, I will show why the existing fault tolerant methods are insufficient and propose a new fault free method for asynchronous transient faults.  I will prove using logical proofs as well as formal verification methods to show why my new method always works.  In the final chapter, chapter four, I will conclude on how to better build fault free asynchronous circuits and suggest some possible new research directions.
 %Overview:  why is the problem important  \\  maybe I can extend the Introduction a bit more
+
 \chapter{Background}
 \section{Faults}
 Faults can be split into permanent and non-permanent faults.  Non-permanent faults are further split into transient and intermittent faults \cite{jha_gupta_2003}. %copied 
@@ -80,6 +82,8 @@ In this work we will not be concerned with intermittent faults since it can be t
 %Types of faults transient/perm (and possibly subcases too) \\
 %Asynchronous circuits (different types) possibly synchronous too? (and our circuit model based on Meyer) \\
 %Then talk about the fault tolerant solutions () \\
+
+
 \section{Asynchronous Circuit and Synthesis}
 In the previous chapter we described how an asynchronous circuit works from a higher level perspective and in particular that it should work under varying delays.  In this section we will cover some definitions and properties of the circuit and also how we can synthesize the circuit from a higher level specification.  Both Speed Independent and Delay Insensitive technologies will be introduced.  There are differences but also many similarities between the two methods.  Even though this work is based on the Speed Independent model, there has been some previous work done on the Quasi-delay Insensitive model so I wanted to provide some context to make a direct comparison.
 
@@ -223,6 +227,127 @@ Then if a 0->1 SEU occurs at $c_1^B$, it is possible for this circuit to deadloc
 The approach that we use to make circuits fault tolerant will be described in the next chaper.  Some of the previous works makes additional assumptions such as the checking circuit is fault free or that only one fault can occur on an arbitrarily large transistor gate.  We allow for standard two-input gates and assume that all gates in our model are subject to faults.  Our fault tolerant transformation procedure is for a class of circuits, semi-modular control circuits, which includes many circuits.
 
 
+
+\chapter{New Background}
+\section{Assumptions:  Boolean signals}
+We make the assumption that all signals are Boolean, that is, the signals are either `logic 0' or logic 1'.  When the the gates and C-elements are excited, and their outputs transition, we assume that transition is instantaneous and that after the transition, the signals are still Boolean.   
+Even in cases where the wires are affected by faults, we assume that the new value of the wires are Boolean, and if they are inputs into circuit elements, that the output of the circuit elements also remain Boolean.  For each circuit, there is a finite set of wires, which we call $W$.  An exact definition $W$ will be presented at a later section, but for now just think of $W$ as including all the wires of some circuit.
+
+\section{Notation for Logical Operation}
+We use the logical operator notation.  For example, the AND operation with two inputs $w_1$ and $w_2$ is $w_1\wedge w_2$.
+The OR operation with two inputs $w_1$ and $w_2$ is $w_1\vee w_2$.  The NOT operation with input $w_1$ is $\neg w_1$.  These are interchangeable with the Electical Engineering convention, which represent AND as $w_1\cdot w_2$, OR as $w_1+w_2$, and NOT as $\overline{w_1}$.
+
+\section{Circuit Elements}
+Gates and elements (C-elements) are components that we allow in our circuit.  In general, we call them elements.  Each element has 2 input wires and 1 output wire.  The elements can be in two states, excited or stable.  Examples of gates are AND, OR, NOT etc.
+
+For each element, there exists a function that maps the inputs into a binary value.  This function is represented by $f:[I \to \{0,1\}] \to \{0,1\}$ where $I$ is the set of input wires of the element, a subset of $W$.  If we assume a two input element, we name the input wires $w_1$ and $w_2$.  The function models the designed operation of the element such that if the element had no delay, $f(w_1,w_2)$ is the output value of the element.  With asynchronous delay, if the inputs remain constant, then the output will eventually take the value of $f(w_1,w_2)$.  For gates, such a function is easily defined.  For example, an AND gate such as in figure \ref{fig:gates0} with two inputs $w_1$ and $w_2$ is modeled by the function 
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.4\textwidth]{gates0}
+\captionof{figure}{AND gate}
+\end{figure}
+\[
+f_{AND}(w_1,w_2)= w_1\wedge w_2
+\]
+
+
+For C-elements, these are memory holding devices so the function also requires the previous output.  For example, the C-element in figure \ref{fig:element0} with two input wires $w_1$ and $w_2$ is modeled by the function\\
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.3\textwidth]{element0}
+\captionof{figure}{C-element}
+\end{figure}
+\[
+f_{C-E}(w_1,w_2) =\left\{
+  \begin{array}{@{}ll@{}}
+    0, & \text{if}\ w_1=0 \wedge w_2=0\\
+    1, & \text{if}\ w_1=1 \wedge w_2=1\\
+    v, & \text{otherwise}
+
+  \end{array}\right. 
+\]
+
+Each element is in one of two states, excited or stable.  
+\begin{definition}
+An element with inputs $w_1$, $w_2$, output $v$ and function $f$ is {\em excited} if $v\neq f(w_1,w_2)$.  
+\end{definition}
+This definition can be extended to include elements with any number of inputs by replacing $w_1$ and $w_2$ with the inputs of a specific element.  A natural extension to an excited element is to consider an element that is not excited.
+\begin{definition} 
+An element is stable if the element is not excited.
+\end{definition}
+Then, a stable element must satisfy $v= f(w_1,w_2)$.  An example of an excited and stable AND gate is shown in figure \ref{fig:gates1}.  An example of an excited and stable C-element is shown in figure \ref{fig:element1}.  For C-elements, there are two situations in which the element is stable.  One is where the output is being actively driven to its function value, i.e. when both inputs are 0 or both inputs are 1.  The second is where the inputs are mismatched and the C-element is holding the previous output.  In the second case, the C-element is stable regardless of the output's value.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{gates1}
+\captionof{figure}{a) the AND element is excited  b) an excited element fires to become stable}
+\end{figure}
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{element1}
+\captionof{figure}{a) the C-element is excited  b) two types of stable C-elements}
+\end{figure}
+
+The states described above are static descriptions of the element, but we must also consider the dynamic behavior.  
+That is, when the input or output wires change.  Because we focus on asynchronous circuits, we view these wire changes as happening one at a time with some delay in between.  For example, we do not allow an input wire and output wire to change at the same time.  With this assumption, it is easy to consider all cases for the dynamic behavior of the element.  When the element is stable, the output wire does not change.  A stable element can have input wire changes, and the input changes may cause the element to become excited.  A small point to note is that not all input changes cause the element to become excited, .
+When the element is excited, there are two possibilities for the element to become stable again.  Either the input changes such that the element is stable, or the output changes.  Again, not all input changes will cause the element to become stable.  In fact, semi-modular circuits utilizes input changes that allow the element to stay excited.  If the output changes in an excited state, the element becomes stable and we call this action a {\em firing} of the element.
+
+\section{Circuits}
+A circuit is a network of elements.  These elements are connected when they share a wire.  For an element, each input is connected to either a primary input or the output of a different element.  Other than elements, a circuit also consists of primary inputs and primary outputs.  Primary inputs are all inputs that are not the output of an element in the circuit.  Primary outputs are outputs of an element in the circuit that connects to another device or element outside of the circuit.  Primary inputs and outputs can be thought of as the interface with outside of the circuit.  They can be the outputs and inputs of a different circuit, or connected to physical mechanisms such as a user pushing a button.   An example of a circuit with primary inputs and outputs is:  .
+    
+\section{States}
+Let $W$ be the set denoting the union of all wires of elements and the primary inputs of a circuit, then $S$ is the set of functions $[W\to \{0,1\}]$ which maps each element of $W$ to a boolean value.  An element of $S$ is called a {\em state}.  
+
+Assigning values to all wires of a circuit names a state.  An example of a state for a circuit containing 3 wires is `101'.  From the set definition, states are unique and no two states share the same values.
+
+\section{Behavior of a circuit}    
+Circuits respond to input changes and produces outputs that accomplish some specified task.  Thus the function of a circuit depends on its dynamic behavior and how its state changes over time.  Under the state representation of a circuit, if the value of a wire changes, the state also changes.  If the wire changes from a previous state $s$ to a new state $s'$, then there is a transition relation between the two states.  Defined more formally with $s(w)$ denoting the value of wire $w$ in state $s$:  
+\begin{definition}
+For all $s$ and $s'$ in S, the \emph{transition relation} $T(s,s')$ holds when there is exactly one wire $w \in W$ such that $s(w)\neq s'(w)$, and wire $w$ must be either the output of an excited element in state $s$, or $w$ is a primary input.
+\end{definition}
+%from state graph, T(s,s') must satisfy... but we can define ourselves which are the transitions (ie arrows in a state graph).  Going from the circuit, there is a transition if the circuit state allows for a transition, either something excited fires or the primary input changes
+There may be multiple transitions from a state $s$.
+
+
+We define a {\em trace} to describe a path the circuit can take.  Different paths can occur because there may be multiple transitions from each state.  We call the succession of states the trace, which is formally defined as follows:
+\begin{definition}A {\em trace} $\sigma=(s_1, s_2, ...)$ of a circuit is a sequence of states of finite or infinite length.  
+%Formally this is written as $\sigma: 0,\ldots ,n-1 \to S$ and $n \in \mathbb{N}$.
+ Every pair of consecutive states in a trace are in a transition relation $T(s_i,s_{i+1})$, where state $s_i$ represents the $i^{th}$ term of the sequence.  .  % such that $T(s_i,s_{i+1})$ for $ 0\leq i\leq n-2$
+\end{definition} 
+We also use $\sigma_n$ as shorthand to denote the sequence of the first $n$ states of $\sigma$.
+Taking different paths form different traces so a circuit has a set of traces.  % A circuit also has a set of initial states where the traces can begin in.  The set of initial states are the same as the set of states in the state graph.
+The set of traces that can occur depends on the {\em initial} state of the wires in the circuit and the primary inputs.  When we specify a circuit, we must also specify the initial state.  
+There are some additional properties that a trace can have and we define them here.
+\begin{definition}
+A {\em stopping state} is a state where there are no excited elements in the circuit. 
+\end{definition} 
+ The circuit may be waiting for a primary input change.
+%Thus, the only possible transitions from a stopping state are from changes in the primary inputs.  In other words, in a stopping state, the circuit is waiting for the primary inputs to changes.\\
+\begin{definition}
+A {\em complete trace} is either a finite length trace that ends in a stopping state, or an infinite trace.
+\end{definition}
+A complete trace of finite length must end in a stopping state where the primary inputs never change and the circuit is stopped.  In other words, for any state of a complete trace, if there are excited elements, one of them must fire, causing the circuit to transition to another state.
+\begin{definition}
+A {\em fair trace} is a trace of a circuit where if an element is excited in any state, it becomes stable in a finite number of transitions.
+\end{definition}
+In other words, every circuit element must be stable infinitely often in a fair trace.  This fits with the physical properties of circuits because the elements are not arbitrarily slow and if excited, they will eventually change. 
+A set of traces can describe a circuit completely, in addition we may be interested in the states that the circuit visits in these traces. 
+A {\em reachable state} is defined in this way.
+\begin{definition}
+A state is {\em reachable} if it is in some trace, of a set of traces.
+%A {\em reachable state} is an element of the set of all states in some trace, of a set of traces.  
+\end{definition}
+Thus, unreachable states are states that are not in any of the traces, of a set of traces.  Since all functionality of a circuit can be described by a set of traces, then the circuit will never enter such a state, hence termed unreachable. 
+
+\section{Semi-modularity}
+Semi-modular circuits are a subset of speed independent circuits and is a large enough class to include circuits used in real applications.  Also, they have been extensively studied, with algorithms to synthesize and analyze them.  A simple explanation of semi-modularity is that once an element is excited, it stays excited until it fires and its output changes.  Formally this can be defined as follows: %proof that semi-modular circuits are also speed independent
+\begin{definition}
+An asynchronous circuit is {\em semi-modular} if for every pair of successive states in its set of traces $s_{i}$ and $s_{i+1}$, if element $j$ is excited in state $s_i$ and did not fire, then $j$ is also excited in state $s_{i+1}$. 
+%An asynchronous circuit is {\em semi-modular} if for every pair of successive states in its set of traces $s_{i}$ and $s_{i+1}$, and let $v$ and $w$ be output wires such that $s_i(w) \neq s_{i+1}(w)$ (wire $w$ transitions) and $w\neq v$, then if $v$ is excited in state $s_i$, $v$ is also excited in state $s_{i+1}$ 
+\end{definition}
+In a circuit with primary inputs, the changes in the primary inputs are constrained not to violate semi-modularity, for example through a protocol using the primary outputs from the circuit to signal when the circuit is ready for a primary input change.
+
+Combining semi-modularity and fair traces, since excited elements in semi-modular circuits can only become stable from the element firing, then a fair infinite trace of the circuit has the property that if an element is excited infinitely often, then it fires infinitely often.  
 
 \chapter{Fault Tolerant Circuit Under Normal Operation and Single Transient Fault}
 \chaptermark{Fault Tolerant Circuit}
@@ -621,7 +746,23 @@ Thus, in the next state $s_{k+1}$, all wire blocks either stay in the same case 
 By induction, the trace $\sigma$ also follows Figure \ref{fig:l4}.  
 \end{proof}
 By symmetry, this is also true if the fault occurs in the A half.  
-The importance of this Lemma is that at most one of $c2$ or $c3$ pairs can be mismatched.  The next theorem shows that this property implies all output wire pairs at an assumed deadlock state must be equal, which causes a contradiction, and thus the fault tolerant circuit does not deadlock under a single transient fault.
+The importance of this Lemma is that at most one of $c2$ or $c3$ pairs can be mismatched.  The next theorem shows that this property implies all output wire pairs at an assumed deadlock state must be equal, which causes a contradiction, and thus the fault tolerant circuit does not deadlock under a single transient fault.\\
+
+Returning to the condition of deadlock, where the circuit has no further transitions and is also not in a stopping state, we can make the following conclusion about the inputs and outputs of C-elements.
+\begin{lemma}[5]
+If the circuit is in deadlock, and the two inputs into a C-element is the same value $v$, then the output of the C-element is also $v$.
+\end{lemma}
+\begin{proof}
+For a circuit in deadlock, there are no excited elements.  If a C-element has two inputs with value $v$, then the output must also be $v$ for the C-element to be unexcited.
+\end{proof}
+Then for each layer of C-elements in the wire block, if say the wires $c2^A$ and $c2^B$ are equal to $v$, then at deadlock the wires $c3^A$ and $c3^B$ are also equal to $v$.  Then by extending this to successive layers of C-elements, all outputs of these C-elements must also hold the value $v$.  This example is illustrated in Figure \ref{fig:t2}.
+
+\begin{figure}
+  \centering
+    \includegraphics[width=\textwidth]{lemma4help}
+  \caption{a) If $c2^A=c2^B$, for example both are 0  b) At deadlock (no excitations) and $c2^A=c2^B$, then the two subsequent layers of C-elements must also be at 0. }
+  \label{fig:t2}
+\end{figure}
 
 %Then the following corollary holds:
 %\begin{corollary}[4.2]
@@ -632,21 +773,15 @@ The importance of this Lemma is that at most one of $c2$ or $c3$ pairs can be mi
 When a single transient fault occurs, if $\sigma$ is a trace in the fault tolerant circuit, then one of $h^{A}(\sigma_n)$ or $h^{B}(\sigma_n)$ (the non faulty half) for all $n \in \mathbb{N}$ is a prefix of a trace in the original circuit.  And the circuit does not deadlock.  
 \end{theorem}
 \begin{proof}
-Without loss of generality, we can assume the fault occurs in the B half of the circuit.  First by Lemma 3, we know that if the fault occurs on the $c2$ or $c3$ wires, then there is no observable differences on the output wires.  Thus we look at when the fault occurs on the remaining wires. 
-Next, we prove that a deadlocked circuit in this scheme must have at least one pair of output wires which have different values.  That is $w^A\neq w^B$ for some wire $w$.
-This is shown by contradiction.  Assume that the circuit is deadlocked at state $s$ and $v^A = v^B$ for all wires $v$ from the original circuit.  If a transient occurs, one can wait until that wire is free to transition.  There
- must exist a wire $w$ that is excited in the state $h^A(s)$ in the original circuit and for that wire block in the duplicated circuit, by Lemma 4 it must also be in a case in Figure \ref{fig:l4}.  We examine each case in turn.
-\begin{itemize}
-	\item
-	Case 1: Since wire $w$ in the original circuit is excited, then by Lemma 1, the wire block $w$ is in case a or d in Figure \ref{fig:l1helper} and wires $c1^A$ or $w^A$ can transition.
-\item
-Case 2:  Wire $c1^B$ may be 0 or 1.  If $c1^B=0$, since the inputs to A half and B half are equal then $c1^B$ must be excited and can transition to 1.  If $c1^A=1$ then the wire block can transition to case 3a or 3b.
-\item
-Case 3a/3b:  Wire $c1^B$ may be 0 or 1.  If $c1^B=0$, again $c1^B$ can transition to 1.  If $c1^B=1$ then it can transition to case 4.
-\item
-Case 4/5a/5b:  Wire $c3$ is excited and can transition. 
-\end{itemize}
-Thus a transition can always occur and the circuit is not deadlocked which leads to a contradiction.  To remain deadlocked, it must be true that there exists a wire where $w^A\neq w^B$, which implies its $c1^A\neq c1^B$ and $c2^A\neq c2^B$ and $c3^A\neq c3^B$.  But this is not a possible case by Lemma 4. Thus deadlock is not possible when there is a single transient fault.  And by Lemma 1, $h^A(\sigma_n)$ is a prefix of a trace in the original circuit. 
+Without loss of generality, we can assume the fault occurs in the B half of the circuit.  First by Lemma 3, we know that if the fault occurs on the $c2$ or $c3$ wires, then there is no observable differences on the output wires and the circuit does not deadlock.  Thus we look at when the fault occurs on the remaining wires.\\ 
+
+We show there exists a contradiction when the fault occurs on the remaining wires and we assume that the circuit is in deadlock.  We first show that the output wires $w^A = w^B$ for all wire blocks.  For each wire block $w$, Lemma 4 states that $c2^A=c2^B$ or $c3^A=c3^B$ (or both).  For both cases, since the circuit is in deadlock, then by Lemma 5 all wire blocks have output wires with the property $w^A = w^B$.  \\%Don't know if this version is better than just saying cases 1 2 6 can be in deadlock, and of those w^A=w^B
+
+Next, with this new property, we show that there exists a contradiction and the circuit must not be in deadlock.  Let the circuit be in some deadlocked state $s$.  By Lemma 1, $h^A(s)$ is a state in the original circuit.  By definition of deadlocked state, the state $h^A(s)$ is not a stopping state, so there must exist a wire $v$ that is excited.  In the duplicated circuit, for the circuit to be in deadlock in wire block $v$, the $c1^A$ wire must have value $\neg{v}$, because otherwise the logic block in the A half is excited.  Since $w^A = w^B$ for all wires then $h^A(s)=h^B(s)$ and the $c1^B$ wire must also have value $\neg{v}$ or the logic block in the B half is excited. By Lemma 5, $v^A$ and $v^B$ wires must have the same value as the $c1$ wires.  However this results in $v^A= \neg{v}$ which is a contradiction, therefore the initial assumption is wrong and the circuit is not in deadlock.
+%excited blocks, and stopping states
+%the fallible part of the logic is that if inputs to B is the same it may not be excited (it is in our case because I know the structure of the logic block) but in a general implementation it could not be, ie if it depends on previous inputs etc
+
+Thus deadlock is not possible when there is a single transient fault.  And by Lemma 1, $h^A(\sigma_n)$ is a prefix of a trace in the original circuit. 
 \end{proof}
 
 Thus we have shown that under a single transient fault that the transformed circuit has a half that behaves like the original circuit and the transformation is a fault tolerant transformation.
