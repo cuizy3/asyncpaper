@@ -502,11 +502,11 @@ Then, Lemma 2 shows deadlock does not occur during normal operation.  Combining 
 This leads to the definition and proof of Lemma 1 as follows:
 
 \begin{lemma}[1]
-For every trace $\sigma$ of the fault-tolerant circuit which is fault free and the A half begins in a valid initial state, the following three properties hold: %still kind of weird wording
+Consider a fault-tolerant circuit that is fault free and its A half begins in a valid initial state.  For every trace $\sigma$ of this circuit, the following two properties hold: %still kind of weird wording
 \begin{itemize}
 \item P1: The half-circuit mapping of a prefix of $\sigma$, written as $h^{A}(\sigma_n)$, is also a prefix of a trace of the original circuit, regardless of the wire values in the B half.
 %\item P2: The logic blocks in the A half are semi-modularity consistent for all states in $\sigma$
-\item P2: For all states $s$ in $\sigma$, a wire $w$ in state $h^A(s)$ is excited in the original circuit if and only if exactly one of the following is true in the fault-tolerant circuit: $c1^A$ is excited or $c1^{A}\neq c2^{A}$ or $c2^{A}\neq c3^A$ or $c3^{A}\neq w^A$.  When one of these conditions holds, we say “the wireblock $w$ is excited.”  A wire $w$ in state $h^A(s)$ is unexcited in the original circuit if and only if none of the four conditions are true in the fault-tolerant circuit.  (No more than one of the four conditions mentioned may be true regardless if $w$ is excited or unexcited.) 
+\item P2: For all states $s$ in $\sigma$, a wire $w$ in state $h^A(s)$ is excited in the original circuit if and only if exactly one of the following is true in the fault-tolerant circuit: $c1^A$ is excited or $c1^{A}\neq c2^{A}$ or $c2^{A}\neq c3^A$ or $c3^{A}\neq w^A$.  When one of these conditions holds, we say “the wireblock $w^A$ is excited.”  A wire $w$ in state $h^A(s)$ is unexcited in the original circuit if and only if none of the four conditions are true in the fault-tolerant circuit.  (No more than one of the four conditions mentioned may be true regardless if $w$ is excited or unexcited.) 
 \end{itemize}
  
 %Let $\sigma_n$ be the sequence of the first $n$ states of a trace $\sigma$ of the fault-tolerant circuit (the trace is possibly finite).  
@@ -520,23 +520,26 @@ For every trace $\sigma$ of the fault-tolerant circuit which is fault free and t
 \end{lemma}
 
 \begin{proof}
-Let $\sigma$ be an arbitrary trace of the fault-tolerant circuit.  We will show by induction on $n$ 
-that for any prefix of the trace $\sigma_n$, where $n$ is an integer from 1 to the length of the trace, $h^A(\sigma_n)$ is a prefix of a trace of the original circuit.
+Let $\sigma$ be an arbitrary trace of the fault-tolerant circuit.  We will show by induction on $n$ that Lemma 1 is true for any prefix of the trace $\sigma_n$, where $n$ is an integer from 1 to the length of the trace.  
+%We will show by induction on $n$ that for any prefix of the trace $\sigma_n$, where $n$ is an integer from 1 to the length of the trace, $h^A(\sigma_n)$ is a prefix of a trace of the original circuit.
 % true but needs to find a new home -> either $h^A(s_n)=h^A(s_{n+1})$ or $T(h^A(s_n), h^A(s_{n+1}))$
-We show the induction hypothesis holds in the base case of $\sigma_1$ consisting of state $s_1$, a valid initial state.
+We show the induction hypothesis holds in the base case of $\sigma_1$ consisting of state $s_1$, a valid initial state by construction.
 \begin{itemize}
-\item For every $s_1$ that is a valid initial state, we have that $h^A(s_1)$ is some state in the original circuit by construction.  Thus $h^A(s_1)$ is a prefix of length 1 of a trace in the original circuit and P1 holds.
+\item For every $s_1$ that is a valid initial state, we have that $h^A(s_1)$ is some state in the original circuit by construction. %how to compare with OG circuit NEED TO FIX!!
+ Thus $h^A(s_1)$ is a prefix of length 1 of a trace in the original circuit and P1 holds.
 %\item We assigned the initial wire values so that the logic blocks are in a semi-modularity consistent state so P2 holds.
 \item 
-For any wire, $c1^A$, $c2^A$, $c3^A$ and $w^A$ are assigned the same values by the valid initial state.  Thus any excitations must be on $c1^A$. Since all output/input wires have the same values in the original and fault-tolerant circuit, if wire $w$ is excited in the original circuit, then $c1^A$ must be excited in the fault-tolerant circuit.  If wire $w$ is unexcited in the original circuit, then $c1^A$ is unexcited in the fault-tolerant circuit.  This shows the valid initial state satisfies P2.    %is this enough.... that the existing states follow that iff statement?
+For any wire, the valid initial state (definition) assigns wires $c1^A$, $c2^A$, $c3^A$ and $w^A$ the same values.  Therefore only wire $c1^A$ may be excited. Since all output/input wires have the same values in the original and fault-tolerant circuit, if wire $w$ is excited in the original circuit, then $c1^A$ must be excited in the fault-tolerant circuit.  %ANOTHER INSTANCE OF MAY BE USING ANOTHER LEMMA, observation?
+If wire $w$ is unexcited in the original circuit, then $c1^A$ is unexcited in the fault-tolerant circuit.  This shows the valid initial state satisfies P2.    %is this enough.... that the existing states follow that iff statement?
 \end{itemize}
 
-The induction step is to assume that the induction hypothesis is true for a length $k$ prefix $\sigma_k$ of the trace.  We will prove that the induction hypothesis is also true for all $\sigma_{k+1}$ that exist.  First, in the fault-tolerant circuit, for all possible transitions from current state $s_k$, we show that after applying the half circuit mapping there is either no transitions in the original circuit or it is also a transition of the original circuit, and thus P1 is true. (very long, very badly worded sentence, need to fix it)  
-Second, we show for all possible next states $s_{k+1}$ that P2 is true and all wire blocks in $s_{k+1}$ are in one of the cases in Figure \ref{fig:l1helper}.\\
+The induction step is to assume that the induction hypothesis is true for a length $k$ prefix $\sigma_k$ of a given trace.  We will prove that the induction hypothesis is true for $\sigma_{k+1}$ by first proving it for the set of all possible traces of length $k+1$ (including prefix of traces longer than $k+1$) with $\sigma_k$ as their first $k$ terms.  %/length $k$ prefix  
+The trace $\sigma_{k+1}$ is an element in this set and consequently the induction hypothesis is true for $\sigma_{k+1}$ as well.  
+%We will prove that the induction hypothesis is also true for all $\sigma_{k+1}$ that exist. 
+To show the hypothesis is true for all such length $k+1$ traces, it is equivalent to considering all possible transitions from the state $s_k$ and showing the hypothesis is true for the new state $s_{k+1}$ in the fault-tolerant circuit.\\
 
-Since P1 and P2 are true for all states in $\sigma_k$, they must also be true for the current state $s_k$. From state $s_k$, we examine all possible transitions that change wire values in the A-half; a transition may occur on excited gates or C-elements.  We ignore transitions in the B-half because those transitions do not change wire values in the A-half and the resulting states are deleted during the half circuit mapping.  Wire blocks in the A-half are in one of the cases in Figure \ref{fig:l1helper}, thus transitions in the A-half can only occur in wire blocks that are in cases 1-4 of the figure.  (By P2, if a wire block $w$ 
-(is wire block defined?) 
-is excited in state $s_k$, then the corresponding wire $w$ is excited in the original circuit in state $h^A(s_k)$.  To cover all transitions, it suffices to examine transitions in an excited wire block from cases 1-4.  )
+In fact, the possible transitions can be neatly partitioned into the cases in Figure \ref{fig:l1helper}.  From state $s_k$, we examine all possible transitions that change wire values in the A-half; a transition may occur on excited gates or C-elements.  We ignore transitions in the B-half because those transitions do not change wire values in the A-half and the resulting states are deleted during the half circuit mapping.  In addition, from the induction hypothesis, P1 and P2 are true for the current state $s_k$.   Thus wire blocks in the A-half in state $s_k$ are in one of the cases in Figure \ref{fig:l1helper}, and the transitions in the A-half can only occur in wire blocks that are in cases 1-4 of the figure.  (By P2, if a wire block $w$ 
+is excited in state $s_k$, then the corresponding wire $w$ is excited in the original circuit in state $h^A(s_k)$.  To cover all transitions, it suffices to examine transitions in an excited wire block from cases 1-4. ) \\
 
 % which by P3 applied to state $s_k$, implies that the corresponding wire is also excited in the original circuit.
 %By P3, wires in the fault-tolerant circuit may change only if the wire block is excited, which implies wire $w$ is also excited in the original circuit in state $h^A(s_k)$.
@@ -554,11 +557,16 @@ is excited in state $s_k$, then the corresponding wire $w$ is excited in the ori
   \label{fig:l1helper}
 \end{figure}
 
-We first show that P1 is true for $\sigma_{k+1}$.  We consider transitions from cases 1-3 together (1-3 in Figure \ref{fig:l1helper}). (maybe still need to be more clear about wire block vs transitions) 
-If an excited wire block $w$ is in any of these 3 cases, there is only one possible transition for each case: the new value of the signal propagates down the C-element chain.  Thus in the new state $s_{k+1}$, wire block $w$ is in cases 2-4 respectively.  For all 3 cases, the transition occurs on an intermediate wire and $h^A(s_{k+1})=h^A(s_{k})$.  This is a repeated state under the half circuit mapping and is deleted in the resulting trace.  Thus $h^{A}(\sigma_{k+1})=h^{A}(\sigma_k)$ and therefore $h^{A}(\sigma_{k+1})$ must also be a prefix of a trace of the original circuit. \\
-Case 4 is when $w^A$ transitions in the fault-tolerant circuit, as shown in case d of Figure \ref{fig:l1helper}.  Then in the original circuit, the transition from state $h^A(s_k)$ to state $h^A(s_{k+1})$ is on wire $w$.  Because wire $w$ is excited in state $h^A(s_k)$, this is a valid transition (i.e., $T(h^A(s_k), h^A(s_{k+1}))$) and $h^{A}(\sigma_{k+1})$ is a prefix of a trace of the original circuit. \\
+We prove P1 and P2 sequentially for $s_{k+1}$.  The proof for P1 only relies on the induction hypothesis being true in state $s_k$ and is as follows: \\
 
-Next, we show that P2 is true for $\sigma_{k+1}$.  Again we consider all possible transitions that lead to the new state $s_{k+1}$.  The wireblock which transitions, which we again name $w$, is in one of cases 1-4.  
+\begin{itemize}
+We first show that P1 is true for $\sigma_{k+1}$.  
+\item We consider transitions from cases 1-3 together (1-3 in Figure \ref{fig:l1helper}). (maybe still need to be more clear about wire block vs transitions) 
+If an excited wire block $w$ is in any of these 3 cases, there is only one possible transition for each case: the new value of the signal propagates down the C-element chain.  Thus in the new state $s_{k+1}$, wire block $w$ is in cases 2-4 respectively.  For all 3 cases, the transition occurs on an intermediate wire and $h^A(s_{k+1})=h^A(s_{k})$.  This is a repeated state under the half circuit mapping and is deleted in the resulting trace.  Thus $h^{A}(\sigma_{k+1})=h^{A}(\sigma_k)$ and therefore $h^{A}(\sigma_{k+1})$ must also be a prefix of a trace of the original circuit. 
+\item Case 4 is when $w^A$ transitions in the fault-tolerant circuit, as shown in case d of Figure \ref{fig:l1helper}.  Then in the original circuit, the transition from state $h^A(s_k)$ to state $h^A(s_{k+1})$ is on wire $w$.  Because wire $w$ is excited in state $h^A(s_k)$, this is a valid transition (i.e., $T(h^A(s_k), h^A(s_{k+1}))$) and $h^{A}(\sigma_{k+1})$ is a prefix of a trace of the original circuit. 
+\end{itemize}
+
+Next, we show that P2 is true for $s_{k+1}$.  Again we consider all possible transitions that lead to the new state $s_{k+1}$.  The wireblock which transitions, which we again name $w$, is in one of cases 1-4.  
 
 \begin{itemize}
 \item Again, we consider transitions from cases 1-3 together (1-3 in Figure \ref{fig:l1helper}).  We use the following fact from the P1 proof: in the new state $s_{k+1}$, the wireblock $w$ is in cases 2-4 respectively and $h^A(s_{k+1})=h^A(s_{k})$.  Since $h^A(s_{k+1})=h^A(s_{k})$, then all wires in the original circuit do not change excitations in the new state $h^A{s_{k+1}}$.  Then $w$ in the original circuit remains excited in state $h^A{s_{k+1}}$, while wireblock $w$ in the fault tolerant circuit is in one of cases 2-4 in state $s_{k+1}$.  Thus, wireblock $w$ satisfies P2.  All other wireblocks in the fault-tolerant circuit do not change cases in the new state $s_{k+1}$.  (explain why? does it involve `P2')  
